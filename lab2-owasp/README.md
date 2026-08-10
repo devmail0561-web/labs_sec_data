@@ -1,6 +1,6 @@
 # LAB 2 — Tests de sécurité OWASP
 ## ZAP × Tests manuels × Exploitation × Juice Shop
-### Groupe 14 — Polytech Diamniadio — 2024-2025
+### Groupe 14 — UNCHK — 2024-2025
 
 ---
 

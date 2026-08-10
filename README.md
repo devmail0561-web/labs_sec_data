@@ -1,5 +1,5 @@
 # Projet de sécurité — OWASP Juice Shop
-## Module : Sécurité des données — Polytech Diamniadio — Groupe 14
+## Module : Sécurité des données — Universite Numerique Cheikh Hamidou Kane (UNCHK) 
 
 ---
 
