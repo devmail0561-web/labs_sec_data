@@ -88,13 +88,15 @@ lab2-owasp/
 ├── docker-compose.yml
 ├── README.md
 ├── evidence/                       ← Preuves (générées à l'exécution)
-│   ├── screenshots/                ← Captures manuelles (navigateur)
 │   ├── http/                       ← En-têtes HTTP, fichiers /ftp/
 │   ├── requests/                   ← Requêtes curl
 │   ├── responses/                  ← Réponses HTTP
 │   ├── tokens/                     ← JWT extraits
 │   └── notes/                      ← Fiches de vulnérabilités
-├── reports/                        ← Rapports ZAP (générés)
+├── reports/                        ← Rapports finaux
+│   ├── rapport_lab2_owasp.html     ← Rapport complet (HTML, page de garde colorée)
+│   ├── rapport_lab2_owasp.md       ← Rapport complet (Markdown)
+│   └── captures_lab2.pdf           ← Captures d'écran des exploits (PDF)
 └── scans/
     ├── zap_scan.sh                 ← Scan automatisé ZAP
     ├── test_vulnerabilities_manuels.sh  ← Détection V01–V04

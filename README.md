@@ -20,7 +20,11 @@ projet/
     ├── README.md
     ├── docker-compose.yml
     ├── evidence/
-    └── scans/
+    ├── scans/
+    └── reports/
+        ├── rapport_lab2_owasp.html  ← Rapport complet (HTML)
+        ├── rapport_lab2_owasp.md    ← Rapport complet (Markdown)
+        └── captures_lab2.pdf        ← Captures d'écran des exploits
 ```
 
 ---
