@@ -116,9 +116,9 @@ Le `Jenkinsfile` définit **8 étapes** avec une stratégie de statut différenc
 - L'étape **TEST 01** n'a pas de `catchError` : elle est informative (baseline).
 - Un bloc `post { always { emailext(...) } }` envoie systématiquement un email de résultat.
 
-**Résultat du build #4 (10/08/2026 19:54–19:55) :** `SUCCESS`  
-**Commit checké :** `134515ab` — branche `main`  
-**Durée :** ~35 secondes
+**Résultat du build #5 (10/08/2026 21:16 UTC) :** `SUCCESS`  
+**Commit checké :** `9667c36` — branche `main`  
+**Durée :** ~8 min
 
 ### 3.2 Résultats par test
 
@@ -306,11 +306,12 @@ Le job Jenkins a été reconfiguré de **script inline** vers **Pipeline from SC
 | Branch | `*/main` |
 | Script Path | `lab1-jenkins/Jenkinsfile` |
 
-**Preuve de fonctionnement (console build #4) :**
+**Preuve de fonctionnement (console build #5) :**
 ```
+Started by an SCM change
 Checking out git https://github.com/devmail0561-web/labs_sec_data.git
-Checking out Revision 134515ab6b5570edc737ba9bf47e66622b21b4ba (refs/remotes/origin/main)
-Commit message: "Jenkinsfile : retrait chmod (volume monté :ro, scripts déjà exécutables)"
+Checking out Revision 9667c36df406810e3dc56c49d9dec8f8dc0b6c0e (refs/remotes/origin/main)
+Commit message: "Rapport lab1 : refonte complète HTML + Markdown"
 ```
 
 À chaque build, Jenkins clone ou met à jour le dépôt, lit le `Jenkinsfile` depuis `lab1-jenkins/` et exécute le pipeline.
@@ -387,7 +388,7 @@ post {
 - Lien direct vers la console Jenkins
 - Lien direct vers les artefacts archivés
 
-**Preuve d'envoi (console build #4) :**
+**Preuve d'envoi (console build #5) :**
 ```
 [Pipeline] emailext
 Sending email to: michel.tendeng@unchk.edu.sn
@@ -407,10 +408,11 @@ archiveArtifacts(
 )
 ```
 
-**Artefacts du build #4 archivés :**
+**Artefacts du build #5 archivés :**
 ```
-reports/
+captures/reports/
 ├── rapport_final_lab1.txt
+├── rapport_final.txt
 ├── test_api_security_report.txt
 ├── test_auth_report.txt
 ├── test_exploitation_report.txt
@@ -510,7 +512,7 @@ Ce laboratoire a atteint ses deux objectifs :
 
 **Partie 1 :** Le pipeline Jenkins exécute automatiquement 6 batteries de tests de sécurité à chaque build, couvrant la détection (TEST 01–05) et l'exploitation (TEST 06). Quatre vulnérabilités ont été exploitées avec succès : SQLi→JWT admin (CVSS 9.8), IDOR paniers (CVSS 8.1), Path Traversal + null byte bypass (CVSS 7.5), et tentative XSS stocké.
 
-**Partie 2 :** Jenkins a été reconfiguré en *Pipeline from SCM* — il récupère désormais le `Jenkinsfile` directement depuis GitHub (`https://github.com/devmail0561-web/labs_sec_data.git`, branche `main`) à chaque build. Le polling automatique (`pollSCM H/5`) détecte tout nouveau commit en moins de 5 minutes et déclenche le pipeline sans intervention manuelle. Le webhook `githubPush()` est déclaré pour un déclenchement immédiat dès que Jenkins sera exposé sur le réseau public. Les notifications email HTML sont envoyées en fin de build avec le statut, le commit, le lien console et les artefacts.
+**Partie 2 :** Jenkins a été reconfiguré en *Pipeline from SCM* — checkout GitHub confirmé en console (commit `9667c36`, build #5 déclenché par SCM change). Le polling automatique (`pollSCM H/5`) détecte tout nouveau commit en moins de 5 minutes et déclenche le pipeline sans intervention manuelle. Le webhook `githubPush()` est déclaré pour un déclenchement immédiat dès que Jenkins sera exposé sur le réseau public. Les notifications email HTML sont envoyées en fin de build avec le statut, le commit, le lien console et les artefacts.
 
 L'ensemble constitue un pipeline **DevSecOps opérationnel** : tout commit sur le dépôt déclenche automatiquement les tests de sécurité et notifie l'équipe du résultat.
 
@@ -522,27 +524,39 @@ L'ensemble constitue un pipeline **DevSecOps opérationnel** : tout commit sur l
 
 ```
 https://github.com/devmail0561-web/labs_sec_data
-├── lab1-jenkins/
-│   ├── Jenkinsfile                   ← Pipeline from SCM
-│   ├── docker-compose.yml
-│   ├── reports/
-│   │   ├── rapport_lab1_jenkins.html
-│   │   └── rapport_lab1_jenkins.md
-│   └── scripts/
-│       ├── test_http.sh
-│       ├── test_headers.sh
-│       ├── test_methods.sh
-│       ├── test_auth.sh
-│       ├── test_api_security.sh
-│       ├── test_exploitation.sh
-│       ├── generate_report.sh
-│       └── capture_screenshots.sh
+└── lab1-jenkins/
+    ├── Jenkinsfile                   ← Pipeline from SCM
+    ├── docker-compose.yml
+    ├── captures/
+    │   ├── 01_juiceshop_accueil.png
+    │   ├── 02_juiceshop_login.png
+    │   ├── 03_jenkins_dashboard.png
+    │   ├── 04_jenkins_manage.png
+    │   ├── 05_jenkins_job_page.png
+    │   ├── 06_jenkins_build_console.png
+    │   ├── 07_jenkins_build_detail.png
+    │   ├── 08_jenkins_job_apres_build.png
+    │   ├── 09_juiceshop_ftp_directory.png
+    │   ├── 10_juiceshop_scoreboard.png
+    │   └── reports/
+    │       ├── rapport_final_lab1.txt
+    │       ├── test_*_report.txt  (×6)
+    │       └── evidence/          (EXP01–EXP04 JSON/TXT)
+    ├── reports/
+    │   ├── rapport_lab1_jenkins.html  ← rapport complet (base64 images)
+    │   ├── rapport_lab1_jenkins.md    ← ce fichier
+    │   └── rapport_lab1_jenkins.pdf   ← 19 pages A4 (Puppeteer page.pdf())
+    └── scripts/
+        ├── test_http.sh            test_headers.sh
+        ├── test_methods.sh         test_auth.sh
+        ├── test_api_security.sh    test_exploitation.sh
+        ├── generate_report.sh      capture_screenshots.sh
 ```
 
-### Artefacts Jenkins — Build #4
+### Artefacts Jenkins — Build #5
 
 ```
-reports/
+captures/reports/
 ├── rapport_final_lab1.txt
 ├── test_api_security_report.txt
 ├── test_auth_report.txt
