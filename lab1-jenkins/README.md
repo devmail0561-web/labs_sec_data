@@ -84,6 +84,10 @@ lab1-jenkins/
 ├── docker-compose.yml          ← Juice Shop + Jenkins
 ├── Jenkinsfile                 ← Pipeline 8 étapes
 ├── README.md
+├── reports/
+│   ├── rapport_lab1_jenkins.html  ← Rapport complet (HTML)
+│   └── rapport_lab1_jenkins.md   ← Rapport complet (Markdown)
+├── captures/                   ← Captures d'écran (PNG) + sorties scripts
 └── scripts/
     ├── test_http.sh            ← TEST 01 : Disponibilité HTTP
     ├── test_headers.sh         ← TEST 02 : En-têtes de sécurité
@@ -91,7 +95,8 @@ lab1-jenkins/
     ├── test_auth.sh            ← TEST 04 : Authentification + SQLi
     ├── test_api_security.sh    ← TEST 05 : Exposition APIs
     ├── test_exploitation.sh    ← TEST 06 : Exploitation complète
-    └── generate_report.sh      ← Agrégateur rapport final
+    ├── generate_report.sh      ← Agrégateur rapport final
+    └── capture_screenshots.sh  ← Captures d'écran automatisées
 ```
 
 ---

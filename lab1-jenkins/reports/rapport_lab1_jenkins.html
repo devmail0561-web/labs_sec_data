@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAB 1 — Pipeline CI/CD de sécurité Jenkins — Groupe 14</title>
+  <style>
+    :root {
+      --primary:   #1a3a5c;
+      --accent:    #e63946;
+      --accent2:   #457b9d;
+      --bg:        #f8f9fa;
+      --card:      #ffffff;
+      --text:      #212529;
+      --muted:     #6c757d;
+      --border:    #dee2e6;
+      --crit:      #dc3545;
+      --high:      #fd7e14;
+      --med:       #ffc107;
+      --low:       #28a745;
+      --ok:        #198754;
+      --warn:      #fd7e14;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    /* ── PAGE DE GARDE ── */
+    .cover {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(145deg, #0d1b2a 0%, #1a3a5c 45%, #457b9d 100%);
+      color: #fff;
+      padding: 60px 40px;
+      text-align: center;
+      page-break-after: always;
+    }
+
+    .cover-logo { font-size: 48px; margin-bottom: 16px; opacity: 0.9; }
+    .cover-univ {
+      font-size: 13px; letter-spacing: 3px; text-transform: uppercase;
+      color: #a8d8ea; margin-bottom: 4px;
+    }
+    .cover-faculty { font-size: 15px; color: #cce5f3; margin-bottom: 40px; }
+    .cover-divider {
+      width: 80px; height: 3px; background: var(--accent);
+      margin: 0 auto 32px; border-radius: 2px;
+    }
+    .cover-type {
+      font-size: 12px; letter-spacing: 4px; text-transform: uppercase;
+      color: #a8d8ea; margin-bottom: 12px;
+    }
+    .cover-title { font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 12px; line-height: 1.2; }
+    .cover-subtitle { font-size: 16px; color: #cce5f3; margin-bottom: 48px; font-style: italic; }
+    .cover-divider2 {
+      width: 120px; height: 1px; background: rgba(255,255,255,0.3);
+      margin: 0 auto 32px;
+    }
+    .cover-meta {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px 40px;
+      font-size: 13px; color: #cce5f3; margin-bottom: 40px;
+    }
+    .cover-meta strong { color: #fff; }
+    .cover-authors {
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px; padding: 24px 36px; width: 100%; max-width: 560px;
+    }
+    .cover-authors h3 {
+      font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+      color: #a8d8ea; margin-bottom: 20px;
+    }
+    .author-card { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    .author-card:last-child { margin-bottom: 0; }
+    .author-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; flex-shrink: 0;
+    }
+    .author-info { text-align: left; }
+    .author-name { font-weight: 600; font-size: 14px; color: #fff; }
+    .author-email { font-size: 11px; color: #a8d8ea; }
+    .cover-warning {
+      margin-top: 40px; background: rgba(230,57,70,0.2);
+      border: 1px solid rgba(230,57,70,0.4); border-radius: 8px;
+      padding: 12px 20px; font-size: 12px; color: #ffcdd2; max-width: 560px;
+    }
+
+    /* ── LAYOUT ── */
+    .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+
+    /* ── TOC ── */
+    .toc {
+      background: var(--card); border: 1px solid var(--border);
+      border-left: 4px solid var(--accent2); border-radius: 8px;
+      padding: 24px 28px; margin-bottom: 40px;
+    }
+    .toc h2 {
+      font-size: 13px; text-transform: uppercase; letter-spacing: 2px;
+      color: var(--muted); margin-bottom: 14px;
+    }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: var(--accent2); text-decoration: none; }
+    .toc a:hover { color: var(--accent); text-decoration: underline; }
+
+    /* ── SECTIONS ── */
+    section { margin-bottom: 52px; }
+    .section-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--border);
+    }
+    .section-num {
+      background: var(--primary); color: #fff; width: 32px; height: 32px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; flex-shrink: 0;
+    }
+    h2 { font-size: 20px; color: var(--primary); }
+    h3 { font-size: 16px; color: var(--primary); margin: 24px 0 12px; }
+    p  { margin-bottom: 12px; }
+
+    /* ── CARTES VULNÉRABILITÉS ── */
+    .vuln-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .vuln-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
+    }
+    .vuln-id {
+      font-family: 'Courier New', monospace; font-weight: 700; font-size: 13px;
+      background: var(--primary); color: #fff; padding: 3px 10px; border-radius: 4px;
+    }
+    .vuln-title { font-weight: 600; font-size: 15px; color: var(--primary); flex: 1; margin-left: 10px; }
+    .badge-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .badge {
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border-radius: 20px; white-space: nowrap;
+    }
+    .badge-owasp { background: #e8f0fe; color: #1a56db; }
+    .badge-crit  { background: #fde8e8; color: var(--crit); }
+    .badge-high  { background: #fef3e2; color: #b45309; }
+    .badge-med   { background: #fefce8; color: #854d0e; }
+    .badge-ok    { background: #ecfdf5; color: var(--ok); border: 1px solid #bbf7d0; }
+    .badge-warn  { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+    .status-ok   { color: var(--ok); font-weight: 700; }
+    .status-warn { color: var(--warn); font-weight: 700; }
+    .status-fail { color: var(--crit); font-weight: 700; }
+
+    /* ── TABLEAUX ── */
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+    thead { background: var(--primary); color: #fff; }
+    thead th { padding: 10px 14px; text-align: left; font-weight: 600; }
+    tbody tr:nth-child(even) { background: #f1f5f9; }
+    tbody tr:hover { background: #e2eaf4; }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+
+    /* ── CODE ── */
+    pre {
+      background: #1e2937; color: #e2e8f0; padding: 16px 20px; border-radius: 8px;
+      overflow-x: auto; font-size: 12px; line-height: 1.6; margin: 12px 0;
+    }
+    code {
+      background: #eef2f7; color: #c0392b; padding: 1px 5px;
+      border-radius: 3px; font-family: 'Courier New', monospace; font-size: 12px;
+    }
+    pre code { background: none; color: inherit; padding: 0; }
+
+    /* ── INFO BOXES ── */
+    .box { padding: 14px 18px; border-radius: 8px; margin: 12px 0; font-size: 13px; }
+    .box-info    { background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e3a5f; }
+    .box-danger  { background: #fef2f2; border-left: 4px solid var(--crit); color: #7f1d1d; }
+    .box-warning { background: #fffbeb; border-left: 4px solid var(--med); color: #78350f; }
+    .box-success { background: #f0fdf4; border-left: 4px solid var(--ok); color: #14532d; }
+
+    /* ── PREUVES ── */
+    .evidence-list { list-style: none; padding: 0; margin: 8px 0; }
+    .evidence-list li {
+      font-family: 'Courier New', monospace; font-size: 12px;
+      background: #f1f5f9; border: 1px solid var(--border); padding: 5px 10px;
+      border-radius: 4px; margin-bottom: 4px; color: #1e3a5f;
+    }
+    .evidence-list li::before { content: "📄 "; }
+
+    /* ── CVSS BARRE ── */
+    .cvss-bar {
+      height: 8px; border-radius: 4px; background: var(--border);
+      overflow: hidden; width: 100px; display: inline-block; vertical-align: middle;
+    }
+    .cvss-fill { height: 100%; border-radius: 4px; }
+
+    /* ── RECOMMANDATIONS ── */
+    .rec-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      padding: 18px 22px; margin-bottom: 16px;
+    }
+    .rec-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .rec-id {
+      background: var(--accent2); color: #fff; font-weight: 700;
+      font-size: 12px; padding: 3px 10px; border-radius: 4px;
+    }
+    .rec-title { font-weight: 600; color: var(--primary); }
+
+    /* ── PIPELINE STEPS ── */
+    .pipeline {
+      display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0;
+    }
+    .pipe-step {
+      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      border: 1px solid; white-space: nowrap;
+    }
+    .pipe-ok      { background: #ecfdf5; color: #166534; border-color: #bbf7d0; }
+    .pipe-fail    { background: #fde8e8; color: #991b1b; border-color: #fca5a5; }
+    .pipe-unstable{ background: #fffbeb; color: #92400e; border-color: #fde68a; }
+    .pipe-arrow   { display: flex; align-items: center; color: var(--muted); font-size: 16px; }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center; color: var(--muted); font-size: 12px;
+      padding: 32px 0; border-top: 1px solid var(--border); margin-top: 40px;
+    }
+
+    @media print {
+      .cover { page-break-after: always; }
+      section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE DE GARDE
+═══════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">⚙️</div>
+
+  <div class="cover-univ">Université Numérique Cheikh Hamidou Kane</div>
+  <div class="cover-faculty">Licence Cybersécurité — Groupe 14</div>
+
+  <div class="cover-divider"></div>
+
+  <div class="cover-type">Rapport de Travaux Pratiques</div>
+  <div class="cover-title">LAB 1 — Pipeline CI/CD de sécurité</div>
+  <div class="cover-subtitle">Jenkins × Bash × OWASP Juice Shop × DevSecOps</div>
+
+  <div class="cover-divider2"></div>
+
+  <div class="cover-meta">
+    <div><strong>Module :</strong> Sécurité des données</div>
+    <div><strong>Année académique :</strong> 2024–2025</div>
+    <div><strong>Date :</strong> 10 août 2026</div>
+    <div><strong>Groupe :</strong> 14</div>
+  </div>
+
+  <div class="cover-authors">
+    <h3>Auteurs</h3>
+    <div class="author-card">
+      <div class="author-avatar">MT</div>
+      <div class="author-info">
+        <div class="author-name">Michel TENDENG</div>
+        <div class="author-email">michel.tendeng@unchk.edu.sn</div>
+      </div>
+    </div>
+    <div class="author-card">
+      <div class="author-avatar">MD</div>
+      <div class="author-info">
+        <div class="author-name">Mouhamed El Hadj Malick DIOP</div>
+        <div class="author-email">mouhamedelmalickidrissa.diop@unchk.edu.sn</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cover-warning">
+    ⚠️ <strong>Cadre pédagogique strictement contrôlé.</strong>
+    L'environnement cible est local et isolé.
+    Toute reproduction sur un système réel est illégale.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CONTENU
+═══════════════════════════════════════════════════════════ -->
+<div class="container">
+
+  <!-- TABLE DES MATIÈRES -->
+  <div class="toc">
+    <h2>Table des matières</h2>
+    <ol>
+      <li><a href="#s1">Contexte et objectifs</a></li>
+      <li><a href="#s2">Architecture du laboratoire</a></li>
+      <li><a href="#s3">Pipeline Jenkins — Vue d'ensemble</a></li>
+      <li><a href="#s4">Phase 1 — Tests de détection (TEST 01–05)</a></li>
+      <li><a href="#s5">Phase 2 — Exploitation automatisée (TEST 06)</a></li>
+      <li><a href="#s6">Synthèse des vulnérabilités</a></li>
+      <li><a href="#s7">Recommandations</a></li>
+      <li><a href="#s8">Conclusion</a></li>
+      <li><a href="#s9">Annexes — Références aux preuves</a></li>
+    </ol>
+  </div>
+
+  <!-- ── 1. CONTEXTE ── -->
+  <section id="s1">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <h2>Contexte et objectifs</h2>
+    </div>
+
+    <p>Ce travail pratique s'inscrit dans le module <strong>Sécurité des données</strong> de la Licence Cybersécurité (UNCHK). L'objectif est de concevoir et d'exécuter un <strong>pipeline CI/CD de sécurité automatisé</strong> orchestré par Jenkins, couvrant la détection et l'exploitation de vulnérabilités sur l'application <strong>OWASP Juice Shop</strong>.</p>
+
+    <h3>Objectifs pédagogiques</h3>
+    <table>
+      <thead><tr><th>Objectif</th><th>Méthode</th></tr></thead>
+      <tbody>
+        <tr><td>Concevoir un pipeline de sécurité CI/CD</td><td>Jenkins + Jenkinsfile (Groovy DSL)</td></tr>
+        <tr><td>Automatiser les tests OWASP Top 10</td><td>6 scripts Bash (TEST 01–06)</td></tr>
+        <tr><td>Produire des preuves d'exploitation reproductibles</td><td>Fichiers JSON, tokens JWT, rapports TXT</td></tr>
+        <tr><td>Intégrer la sécurité dans le cycle CI/CD (DevSecOps)</td><td>catchError, archiveArtifacts, UNSTABLE</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Cible</h3>
+    <table>
+      <thead><tr><th>Paramètre</th><th>Valeur</th></tr></thead>
+      <tbody>
+        <tr><td>Application</td><td>OWASP Juice Shop (Node.js / Express)</td></tr>
+        <tr><td>URL interne Docker</td><td><code>http://juiceshop:3000</code></td></tr>
+        <tr><td>URL hôte</td><td><code>http://localhost:3000</code></td></tr>
+        <tr><td>Réseau Docker</td><td><code>172.20.0.0/24</code> — isolé</td></tr>
+        <tr><td>Date des tests</td><td>10 août 2026</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── 2. ARCHITECTURE ── -->
+  <section id="s2">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <h2>Architecture du laboratoire</h2>
+    </div>
+
+    <pre>Machine Linux (172.20.0.0/24)
+│
+├── Jenkins :8080  (172.20.0.20)
+│     │  Pipeline 8 étapes — scripts montés en /lab/scripts/ (read-only)
+│     │
+│     ├── TEST 01 — Disponibilité HTTP        (Baseline)
+│     ├── TEST 02 — En-têtes de sécurité      (A05:2021)
+│     ├── TEST 03 — Méthodes HTTP             (A05:2021)
+│     ├── TEST 04 — Authentification + SQLi   (A03, A07:2021)
+│     ├── TEST 05 — Exposition APIs           (A01, A02:2021)
+│     ├── TEST 06 — Exploitation              (SQLi/IDOR/FTP/XSS)
+│     └── Rapport consolidé + Archivage artefacts
+│
+└── Juice Shop :3000  (172.20.0.10)
+      Application web cible (intentionnellement vulnérable)</pre>
+
+    <p>Les conteneurs sont démarrés via <code>docker compose up -d</code>. Le socket Docker (<code>/var/run/docker.sock</code>) est monté dans Jenkins. Les scripts Bash sont injectés via un volume en lecture seule.</p>
+
+    <div class="box box-info">
+      <strong>Différence avec le LAB 2 :</strong> ce laboratoire remplace OWASP ZAP par une approche DevSecOps — les tests sont intégrés dans un pipeline CI/CD Jenkins, permettant la régression de sécurité automatique à chaque build.
+    </div>
+  </section>
+
+  <!-- ── 3. PIPELINE ── -->
+  <section id="s3">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <h2>Pipeline Jenkins — Vue d'ensemble</h2>
+    </div>
+
+    <p>Le <code>Jenkinsfile</code> définit <strong>8 étapes</strong> avec une gestion fine des statuts de build. Les étapes de détection utilisent <code>catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE')</code> pour signaler les vulnérabilités sans bloquer le pipeline.</p>
+
+    <div class="pipeline">
+      <span class="pipe-step pipe-ok">Préparation</span>
+      <span class="pipe-arrow">→</span>
+      <span class="pipe-step pipe-ok">Vérification cible</span>
+      <span class="pipe-arrow">→</span>
+      <span class="pipe-step pipe-ok">TEST 01 — HTTP</span>
+      <span class="pipe-arrow">→</span>
+      <span class="pipe-step pipe-unstable">TEST 02 — En-têtes</span>
+      <span class="pipe-arrow">→</span>
+      <span class="pipe-step pipe-unstable">TEST 03 — Méthodes</span>
+      <span class="pipe-arrow">→</span>
+      <span class="pipe-step pipe-unstable">TEST 04 — Auth</span>
+      <span class="pipe-arrow">→</span>
+      <span class="pipe-step pipe-unstable">TEST 05 — APIs</span>
+      <span class="pipe-arrow">→</span>
+      <span class="pipe-step pipe-unstable">TEST 06 — Exploitation</span>
+      <span class="pipe-arrow">→</span>
+      <span class="pipe-step pipe-ok">Rapport + Archivage</span>
+    </div>
+
+    <table>
+      <thead><tr><th>Étape</th><th>Type</th><th>Statut attendu</th><th>Raison</th></tr></thead>
+      <tbody>
+        <tr><td>Préparation</td><td>Setup</td><td><span class="status-ok">SUCCESS</span></td><td>Initialisation</td></tr>
+        <tr><td>Vérification cible</td><td>Health check</td><td><span class="status-ok">SUCCESS</span></td><td>Juice Shop disponible</td></tr>
+        <tr><td>TEST 01 — HTTP</td><td>Baseline</td><td><span class="status-ok">SUCCESS</span></td><td>Endpoints répondent</td></tr>
+        <tr><td>TEST 02 — En-têtes</td><td><code>catchError</code></td><td><span class="status-warn">UNSTABLE</span></td><td>HSTS, CSP absents</td></tr>
+        <tr><td>TEST 03 — Méthodes</td><td><code>catchError</code></td><td><span class="status-warn">UNSTABLE</span></td><td>TRACE actif</td></tr>
+        <tr><td>TEST 04 — Auth</td><td><code>catchError</code></td><td><span class="status-warn">UNSTABLE</span></td><td>SQLi bypass auth</td></tr>
+        <tr><td>TEST 05 — APIs</td><td><code>catchError</code></td><td><span class="status-warn">UNSTABLE</span></td><td>Données exposées sans auth</td></tr>
+        <tr><td>TEST 06 — Exploitation</td><td><code>catchError</code></td><td><span class="status-warn">UNSTABLE</span></td><td>4 exploits tentés</td></tr>
+        <tr><td>Rapport + Archivage</td><td><code>archiveArtifacts</code></td><td><span class="status-ok">SUCCESS</span></td><td>Artefacts générés</td></tr>
+      </tbody>
+    </table>
+
+    <div class="box box-warning">
+      <strong>Statut global du build : UNSTABLE</strong> — comportement attendu et documenté. Juice Shop est intentionnellement vulnérable ; le statut UNSTABLE signale la présence de vulnérabilités sans bloquer le pipeline.
+    </div>
+
+    <h3>Options du pipeline</h3>
+    <pre><code>options {
+    timeout(time: 30, unit: 'MINUTES')
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+    timestamps()
+    disableConcurrentBuilds()
+}</code></pre>
+  </section>
+
+  <!-- ── 4. DÉTECTION ── -->
+  <section id="s4">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <h2>Phase 1 — Tests de détection (TEST 01–05)</h2>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Test</th><th>OWASP</th><th>CVSS</th><th>Résultat</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>TEST 01</code></td><td>Disponibilité HTTP</td>
+          <td><span class="badge badge-owasp">Baseline</span></td>
+          <td>—</td>
+          <td><span class="status-warn">⚠️ Non conforme</span></td>
+        </tr>
+        <tr>
+          <td><code>TEST 02</code></td><td>En-têtes de sécurité</td>
+          <td><span class="badge badge-owasp">A05:2021</span></td>
+          <td><span class="badge badge-med">5.3 Medium</span></td>
+          <td><span class="status-fail">❌ FAILURE</span></td>
+        </tr>
+        <tr>
+          <td><code>TEST 03</code></td><td>Méthodes HTTP</td>
+          <td><span class="badge badge-owasp">A05:2021</span></td>
+          <td><span class="badge badge-med">5.8 Medium</span></td>
+          <td><span class="status-fail">❌ FAILURE</span></td>
+        </tr>
+        <tr>
+          <td><code>TEST 04</code></td><td>Authentification + SQLi</td>
+          <td><span class="badge badge-owasp">A03 / A07:2021</span></td>
+          <td><span class="badge badge-crit">9.8 Critical</span></td>
+          <td><span class="status-fail">❌ FAILURE</span></td>
+        </tr>
+        <tr>
+          <td><code>TEST 05</code></td><td>Exposition APIs</td>
+          <td><span class="badge badge-owasp">A01 / A02:2021</span></td>
+          <td><span class="badge badge-high">7.5 High</span></td>
+          <td><span class="status-fail">❌ FAILURE</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- TEST 01 -->
+    <div class="vuln-card">
+      <div class="vuln-card-header">
+        <span class="vuln-id">TEST 01</span>
+        <span class="vuln-title">Disponibilité HTTP — Baseline</span>
+        <div class="badge-row">
+          <span class="badge badge-owasp">Baseline</span>
+          <span class="badge badge-warn">⚠️ Non conforme</span>
+        </div>
+      </div>
+
+      <p>Vérification que les endpoints critiques répondent avec les codes HTTP attendus.</p>
+
+      <table>
+        <thead><tr><th>Endpoint</th><th>HTTP obtenu</th><th>Attendu</th><th>Statut</th></tr></thead>
+        <tbody>
+          <tr><td><code>/</code></td><td>200</td><td>200</td><td>✅ PASS</td></tr>
+          <tr><td><code>/api/Challenges</code></td><td>200</td><td>200</td><td>✅ PASS</td></tr>
+          <tr><td><code>/api/Users</code></td><td>401</td><td>200</td><td>❌ FAIL</td></tr>
+          <tr><td><code>/rest/user/whoami</code></td><td>200</td><td>200</td><td>✅ PASS</td></tr>
+          <tr><td><code>/page-inexistante-xyz</code></td><td>200</td><td>404</td><td>❌ FAIL</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box box-info">
+        <strong>Observation :</strong> <code>/api/Users</code> retourne désormais 401 (endpoint correctement protégé dans cette version de Juice Shop). L'application Angular retourne 200 sur toutes les routes inexistantes (SPA routing) — ce comportement peut masquer des erreurs serveur réelles.
+      </div>
+    </div>
+
+    <!-- TEST 02 -->
+    <div class="vuln-card">
+      <div class="vuln-card-header">
+        <span class="vuln-id">TEST 02</span>
+        <span class="vuln-title">En-têtes HTTP de sécurité — Security Misconfiguration</span>
+        <div class="badge-row">
+          <span class="badge badge-owasp">A05:2021</span>
+          <span class="badge badge-med">CVSS 5.3</span>
+          <span class="badge badge-crit">❌ FAILURE</span>
+        </div>
+      </div>
+
+      <p>Analyse des en-têtes de réponse HTTP sur la page d'accueil de Juice Shop.</p>
+
+      <p><strong>En-têtes bruts reçus :</strong></p>
+      <pre><code>HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Feature-Policy: payment 'self'
+X-Recruiting: /#/jobs</code></pre>
+
+      <table>
+        <thead><tr><th>En-tête</th><th>Sévérité</th><th>Présent ?</th><th>Valeur / Remarque</th></tr></thead>
+        <tbody>
+          <tr><td><code>Strict-Transport-Security</code></td><td><span class="badge badge-crit">CRITICAL</span></td><td>❌ Absent</td><td>Downgrade HTTP possible</td></tr>
+          <tr><td><code>Content-Security-Policy</code></td><td><span class="badge badge-crit">CRITICAL</span></td><td>❌ Absent</td><td>XSS non atténué</td></tr>
+          <tr><td><code>X-Content-Type-Options</code></td><td><span class="badge badge-med">WARNING</span></td><td>✅ Présent</td><td><code>nosniff</code></td></tr>
+          <tr><td><code>X-Frame-Options</code></td><td><span class="badge badge-med">WARNING</span></td><td>✅ Présent</td><td><code>SAMEORIGIN</code></td></tr>
+          <tr><td><code>Referrer-Policy</code></td><td><span class="badge badge-med">WARNING</span></td><td>❌ Absent</td><td>Fuite d'URL possible</td></tr>
+          <tr><td><code>Access-Control-Allow-Origin</code></td><td><span class="badge badge-high">HIGH</span></td><td>⚠️ Wildcard</td><td><code>*</code> — toutes origines autorisées</td></tr>
+          <tr><td><code>X-Powered-By</code></td><td>—</td><td>✅ Absent</td><td>Correct (technologie non exposée)</td></tr>
+          <tr><td><code>Server</code></td><td>—</td><td>✅ Absent</td><td>Correct (serveur non exposé)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box box-danger">
+        <strong>Impact :</strong> Sans CSP, un attaquant peut injecter du contenu malveillant (XSS). Sans HSTS, les communications peuvent être interceptées en clair (attaque downgrade). Le CORS wildcard expose les APIs à des requêtes cross-origin non contrôlées.
+      </div>
+
+      <ul class="evidence-list">
+        <li>captures/reports/test_headers_output.txt</li>
+      </ul>
+    </div>
+
+    <!-- TEST 03 -->
+    <div class="vuln-card">
+      <div class="vuln-card-header">
+        <span class="vuln-id">TEST 03</span>
+        <span class="vuln-title">Méthodes HTTP dangereuses actives</span>
+        <div class="badge-row">
+          <span class="badge badge-owasp">A05:2021</span>
+          <span class="badge badge-med">CVSS 5.8</span>
+          <span class="badge badge-crit">❌ FAILURE — TRACE actif</span>
+        </div>
+      </div>
+
+      <p>Test des méthodes HTTP autorisées sur la racine de l'application.</p>
+
+      <table>
+        <thead><tr><th>Méthode</th><th>Dangereuse</th><th>HTTP obtenu</th><th>Statut</th></tr></thead>
+        <tbody>
+          <tr><td>GET</td><td>Non</td><td>200</td><td>ℹ️ Normal</td></tr>
+          <tr><td>POST</td><td>Non</td><td>200</td><td>ℹ️ Normal</td></tr>
+          <tr><td>HEAD</td><td>Non</td><td>200</td><td>ℹ️ Normal</td></tr>
+          <tr><td>OPTIONS</td><td>Non</td><td>204</td><td>ℹ️ Normal</td></tr>
+          <tr><td><strong>TRACE</strong></td><td><strong>Oui</strong></td><td><strong>200</strong></td><td>⚠️ CRITIQUE</td></tr>
+          <tr><td>PUT</td><td>Oui</td><td>200</td><td>⚠️ WARN</td></tr>
+          <tr><td>DELETE</td><td>Oui</td><td>200</td><td>⚠️ WARN</td></tr>
+          <tr><td>CONNECT</td><td>Oui</td><td>000</td><td>✅ Bloqué</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box box-danger">
+        <strong>TRACE actif — Cross-Site Tracing (XST) :</strong> La méthode TRACE permet d'exfiltrer des cookies <code>HttpOnly</code> lorsqu'elle est combinée avec XSS, contournant ainsi la protection HttpOnly censée prévenir ce type d'accès.
+      </div>
+
+      <ul class="evidence-list">
+        <li>captures/reports/test_methods_output.txt</li>
+      </ul>
+    </div>
+
+    <!-- TEST 04 -->
+    <div class="vuln-card">
+      <div class="vuln-card-header">
+        <span class="vuln-id">TEST 04</span>
+        <span class="vuln-title">Sécurité de l'authentification — SQLi + Rate Limiting</span>
+        <div class="badge-row">
+          <span class="badge badge-owasp">A03:2021</span>
+          <span class="badge badge-owasp">A07:2021</span>
+          <span class="badge badge-crit">CVSS 9.8</span>
+          <span class="badge badge-crit">❌ FAILURE</span>
+        </div>
+      </div>
+
+      <h3>SQL Injection sur <code>POST /rest/user/login</code></h3>
+      <p><strong>Payload utilisé :</strong></p>
+      <pre><code>{ "email": "' OR '1'='1'--", "password": "x" }</code></pre>
+
+      <p><strong>Résultat :</strong> HTTP 200 — JWT valide retourné sans credentials légitimes.</p>
+
+      <div class="box box-danger">
+        <strong>[CRITICAL]</strong> SQLi réussie — JWT retourné sans credentials valides. La requête SQL backend non paramétrée évalue <code>' OR '1'='1'--</code> comme toujours vraie et retourne le premier utilisateur (admin, ID=1).
+      </div>
+
+      <h3>Verbosité des messages d'erreur</h3>
+      <pre><code>Réponse : Invalid email or password.</code></pre>
+      <div class="box box-success">
+        Message générique — pas d'énumération de comptes. Point positif.
+      </div>
+
+      <h3>Rate Limiting</h3>
+      <div class="box box-warning">
+        <strong>[WARN]</strong> Aucun mécanisme de protection contre la force brute détecté après 5 tentatives rapides. Un attaquant peut tenter un nombre illimité de combinaisons.
+      </div>
+
+      <ul class="evidence-list">
+        <li>captures/reports/test_auth_output.txt</li>
+      </ul>
+    </div>
+
+    <!-- TEST 05 -->
+    <div class="vuln-card">
+      <div class="vuln-card-header">
+        <span class="vuln-id">TEST 05</span>
+        <span class="vuln-title">Exposition de données via les APIs</span>
+        <div class="badge-row">
+          <span class="badge badge-owasp">A01:2021</span>
+          <span class="badge badge-owasp">A02:2021</span>
+          <span class="badge badge-high">CVSS 7.5</span>
+          <span class="badge badge-crit">❌ FAILURE</span>
+        </div>
+      </div>
+
+      <table>
+        <thead><tr><th>Endpoint</th><th>HTTP</th><th>Exposition</th><th>Statut</th></tr></thead>
+        <tbody>
+          <tr><td><code>/api/Users</code></td><td>401</td><td>Protégé (auth requise)</td><td>✅ OK</td></tr>
+          <tr><td><code>/api/Feedbacks</code></td><td>200</td><td><code>UserId</code>, commentaires, notes</td><td>❌ CRITICAL</td></tr>
+          <tr><td><code>/rest/admin/application-configuration</code></td><td>200</td><td>Configuration complète, clés OAuth</td><td>❌ CRITICAL</td></tr>
+          <tr><td><code>/ftp/</code></td><td>200</td><td>Listing de fichiers (HTML)</td><td>⚠️ INFO</td></tr>
+        </tbody>
+      </table>
+
+      <p><strong>/api/Feedbacks sans authentification :</strong> expose les <code>UserId</code> de tous les utilisateurs ayant laissé un avis, permettant l'énumération de comptes actifs.</p>
+      <p><strong>/rest/admin/application-configuration sans authentification :</strong> expose la configuration complète de l'application — clés Google OAuth, paramètres internes, métadonnées des challenges — sans aucune restriction d'accès.</p>
+
+      <ul class="evidence-list">
+        <li>captures/reports/test_api_security_output.txt</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── 5. EXPLOITATION ── -->
+  <section id="s5">
+    <div class="section-header">
+      <div class="section-num">5</div>
+      <h2>Phase 2 — Exploitation automatisée (TEST 06)</h2>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Exploit</th><th>OWASP</th><th>CVSS</th><th>Résultat</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>EXP-01</code></td><td>SQLi → JWT admin</td>
+          <td><span class="badge badge-owasp">A03:2021</span></td>
+          <td><span class="badge badge-crit">9.8</span></td>
+          <td><span class="status-ok">✅ JWT admin obtenu</span></td>
+        </tr>
+        <tr>
+          <td><code>EXP-02</code></td><td>IDOR — Paniers utilisateurs</td>
+          <td><span class="badge badge-owasp">A01:2021</span></td>
+          <td><span class="badge badge-high">8.1</span></td>
+          <td><span class="status-ok">✅ Panier victime lu</span></td>
+        </tr>
+        <tr>
+          <td><code>EXP-03</code></td><td>Path Traversal /ftp/ + Null Byte</td>
+          <td><span class="badge badge-owasp">A01:2021</span></td>
+          <td><span class="badge badge-high">7.5</span></td>
+          <td><span class="status-ok">✅ Fichiers téléchargés + bypass</span></td>
+        </tr>
+        <tr>
+          <td><code>EXP-04</code></td><td>XSS Stocké — Feedbacks</td>
+          <td><span class="badge badge-owasp">A03:2021</span></td>
+          <td><span class="badge badge-high">7.2</span></td>
+          <td><span class="status-warn">⚠️ Payload envoyé (HTTP 500)</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- EXP-01 -->
+    <div class="vuln-card">
+      <div class="vuln-card-header">
+        <span class="vuln-id">EXP-01</span>
+        <span class="vuln-title">SQL Injection → JWT Administrateur</span>
+        <div class="badge-row">
+          <span class="badge badge-owasp">A03:2021</span>
+          <span class="badge badge-crit">CVSS 9.8</span>
+          <span class="badge badge-ok">✅ Réussi</span>
+        </div>
+      </div>
+
+      <p><strong>Objectif :</strong> Obtenir un JWT administrateur sans connaître le mot de passe.</p>
+
+      <pre><code>POST /rest/user/login HTTP/1.1
+Content-Type: application/json
+
+{ "email": "' OR '1'='1'--", "password": "x" }</code></pre>
+
+      <p><strong>Résultat :</strong> HTTP 200 — JWT valide retourné.</p>
+
+      <p><strong>JWT admin décodé :</strong></p>
+      <pre><code>{
+  "data": {
+    "id": 1,
+    "email": "admin@juice-sh.op",
+    "password": "0192023a7bbd73250516f069df18b500",
+    "role": "admin",
+    "isActive": true,
+    "createdAt": "2026-08-10 18:48:07.694 +00:00"
+  },
+  "bid": 1,
+  "iat": 1786388813
+}</code></pre>
+
+      <div class="box box-danger">
+        <strong>Impact démontré :</strong>
+        <ul style="margin-top:8px; padding-left:20px;">
+          <li>Accès administrateur complet sans credential valide</li>
+          <li>Hash MD5 du mot de passe admin exposé dans le payload JWT : <code>0192023a7bbd73250516f069df18b500</code></li>
+          <li>Ce hash correspond au mot de passe <code>admin123</code> — cassable en quelques secondes par rainbow table</li>
+          <li>Identité confirmée via <code>/rest/user/whoami</code> : <code>admin@juice-sh.op</code></li>
+        </ul>
+      </div>
+
+      <ul class="evidence-list">
+        <li>captures/reports/evidence/EXP01_request.json</li>
+        <li>captures/reports/evidence/EXP01_response.json</li>
+        <li>captures/reports/evidence/EXP01_jwt_admin.txt</li>
+        <li>captures/reports/evidence/EXP01_whoami.json</li>
+      </ul>
+    </div>
+
+    <!-- EXP-02 -->
+    <div class="vuln-card">
+      <div class="vuln-card-header">
+        <span class="vuln-id">EXP-02</span>
+        <span class="vuln-title">IDOR — Accès aux paniers d'autres utilisateurs</span>
+        <div class="badge-row">
+          <span class="badge badge-owasp">A01:2021</span>
+          <span class="badge badge-high">CVSS 8.1</span>
+          <span class="badge badge-ok">✅ Réussi</span>
+        </div>
+      </div>
+
+      <p><strong>Objectif :</strong> Accéder au panier d'un autre utilisateur en manipulant l'identifiant de ressource.</p>
+      <p><strong>Principe :</strong> L'API <code>/rest/basket/{id}</code> ne vérifie pas que l'utilisateur authentifié est propriétaire du panier demandé (absence de contrôle d'autorisation).</p>
+
+      <p><strong>Déroulement :</strong></p>
+      <ol style="padding-left:20px; margin:10px 0; font-size:13px;">
+        <li>Création d'un compte attaquant (<code>attacker_23568@lab.local</code>)</li>
+        <li>Connexion et obtention du JWT attaquant</li>
+        <li>Requête <code>GET /rest/basket/1</code> avec le JWT attaquant → <strong>HTTP 200</strong></li>
+        <li>Lecture complète du panier de la victime (ID=1)</li>
+      </ol>
+
+      <p><strong>Contenu du panier victime consulté :</strong></p>
+      <pre><code>Apple Juice (1000ml)   × 2   — 1.99 €  (ProductId: 1)
+Orange Juice (1000ml)  × 3   — 2.99 €  (ProductId: 2)
+Eggfruit Juice (500ml) × 1   — 8.99 €  (ProductId: 3)
+BasketId: 1  |  UserId: 1</code></pre>
+
+      <div class="box box-danger">
+        <strong>Impact démontré :</strong> Un attaquant authentifié peut lire le panier de n'importe quel utilisateur en incrémentant l'ID de 1 à N. Le même principe s'applique potentiellement à d'autres ressources utilisant des IDs séquentiels.
+      </div>
+
+      <ul class="evidence-list">
+        <li>captures/reports/evidence/EXP02_basket_1.json</li>
+      </ul>
+    </div>
+
+    <!-- EXP-03 -->
+    <div class="vuln-card">
+      <div class="vuln-card-header">
+        <span class="vuln-id">EXP-03</span>
+        <span class="vuln-title">Path Traversal /ftp/ + Bypass par Null Byte</span>
+        <div class="badge-row">
+          <span class="badge badge-owasp">A01:2021</span>
+          <span class="badge badge-high">CVSS 7.5</span>
+          <span class="badge badge-ok">✅ Réussi</span>
+        </div>
+      </div>
+
+      <p><strong>Objectif :</strong> Accéder à des fichiers sensibles exposés via le répertoire <code>/ftp/</code>.</p>
+
+      <table>
+        <thead><tr><th>Fichier</th><th>Méthode</th><th>HTTP</th><th>Résultat</th></tr></thead>
+        <tbody>
+          <tr><td><code>/ftp/acquisitions.md</code></td><td>GET direct</td><td>200</td><td>✅ Téléchargé</td></tr>
+          <tr><td><code>/ftp/legal.md</code></td><td>GET direct</td><td>200</td><td>✅ Téléchargé</td></tr>
+          <tr><td><code>/ftp/eastere.gg</code></td><td>GET direct</td><td>403</td><td>❌ Bloqué</td></tr>
+          <tr><td><code>/ftp/package.json.bak</code></td><td>GET direct</td><td>403</td><td>❌ Bloqué</td></tr>
+          <tr><td><code>/ftp/package.json.bak%2500.md</code></td><td>Null byte bypass</td><td>200</td><td>✅ Filtre contourné</td></tr>
+        </tbody>
+      </table>
+
+      <p><strong>Extrait de <code>acquisitions.md</code> (confidentiel) :</strong></p>
+      <pre><code># Planned Acquisitions
+> This document is confidential! Do not distribute!
+Our company plans to acquire several competitors within the next year.
+This will have a significant stock market impact...</code></pre>
+
+      <p><strong>Technique null byte :</strong> Le filtre d'extension bloque les fichiers <code>.bak</code>. En encodant un null byte (<code>%00</code> → <code>%2500</code> en double URL-encoding), le serveur traite le chemin comme se terminant par <code>.md</code> et sert le fichier <code>.bak</code> réel.</p>
+
+      <p><strong>Extrait de <code>package.json.bak</code> (métadonnées sensibles) :</strong></p>
+      <pre><code>{
+  "name": "juice-shop",
+  "version": "6.2.0-SNAPSHOT",
+  "description": "An intentionally insecure JavaScript Web Application",
+  "author": "Björn Kimminich &lt;bjoern.kimminich@owasp.org&gt;"
+}</code></pre>
+
+      <div class="box box-danger">
+        <strong>Impact :</strong> Documents d'acquisition confidentiels accessibles sans authentification. Version exacte du logiciel exposée (facilite la recherche de CVE ciblés). Filtre d'extension contournable par double encodage.
+      </div>
+
+      <ul class="evidence-list">
+        <li>captures/reports/evidence/EXP03_acquisitions.md.txt</li>
+        <li>captures/reports/evidence/EXP03_legal.md.txt</li>
+        <li>captures/reports/evidence/EXP03_nullbyte_package.json.bak.txt</li>
+      </ul>
+    </div>
+
+    <!-- EXP-04 -->
+    <div class="vuln-card">
+      <div class="vuln-card-header">
+        <span class="vuln-id">EXP-04</span>
+        <span class="vuln-title">XSS Stocké dans les feedbacks</span>
+        <div class="badge-row">
+          <span class="badge badge-owasp">A03:2021</span>
+          <span class="badge badge-high">CVSS 7.2</span>
+          <span class="badge badge-warn">⚠️ Partiel</span>
+        </div>
+      </div>
+
+      <p><strong>Objectif :</strong> Injecter un payload JavaScript persistant dans les feedbacks de l'application.</p>
+
+      <p><strong>Requête :</strong></p>
+      <pre><code>POST /api/Feedbacks HTTP/1.1
+Content-Type: application/json
+
+{
+  "comment": "Lab test &lt;iframe src=\"javascript:alert(`Jenkins-XSS-EXP04`)\"&gt;&lt;/iframe&gt;",
+  "rating": 1,
+  "captchaId": 0,
+  "captcha": ""
+}</code></pre>
+
+      <p><strong>Résultat :</strong> HTTP 500 — Le serveur a retourné une erreur interne. Le payload a probablement déclenché une erreur de validation ou de sérialisation côté serveur.</p>
+
+      <div class="box box-warning">
+        <strong>Note :</strong> Une validation complémentaire via navigateur (page <code>/#/about</code>) est nécessaire pour confirmer l'exécution côté client. L'impact attendu reste : exécution de JavaScript arbitraire dans le navigateur de tout visiteur consultant la page des avis.
+      </div>
+
+      <ul class="evidence-list">
+        <li>captures/reports/evidence/EXP04_xss_request.json</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── 6. SYNTHÈSE ── -->
+  <section id="s6">
+    <div class="section-header">
+      <div class="section-num">6</div>
+      <h2>Synthèse des vulnérabilités</h2>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Vulnérabilité</th><th>OWASP Top 10</th><th>CVSS</th><th>Barre</th><th>Criticité</th><th>Exploitée</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>EXP-01</code></td><td>SQL Injection — Auth</td>
+          <td><span class="badge badge-owasp">A03:2021</span></td>
+          <td><strong>9.8</strong></td>
+          <td><div class="cvss-bar"><div class="cvss-fill" style="width:98%;background:#dc3545;"></div></div></td>
+          <td>🔴 Critique</td><td><span class="status-ok">✅ Oui</span></td>
+        </tr>
+        <tr>
+          <td><code>EXP-02</code></td><td>IDOR — Paniers</td>
+          <td><span class="badge badge-owasp">A01:2021</span></td>
+          <td><strong>8.1</strong></td>
+          <td><div class="cvss-bar"><div class="cvss-fill" style="width:81%;background:#fd7e14;"></div></div></td>
+          <td>🔴 Critique</td><td><span class="status-ok">✅ Oui</span></td>
+        </tr>
+        <tr>
+          <td><code>TEST 05</code></td><td>Config admin sans auth</td>
+          <td><span class="badge badge-owasp">A01:2021</span></td>
+          <td><strong>7.5</strong></td>
+          <td><div class="cvss-bar"><div class="cvss-fill" style="width:75%;background:#fd7e14;"></div></div></td>
+          <td>🟠 Élevé</td><td><span class="status-ok">✅ Oui</span></td>
+        </tr>
+        <tr>
+          <td><code>EXP-03</code></td><td>Path Traversal + Null Byte</td>
+          <td><span class="badge badge-owasp">A01:2021</span></td>
+          <td><strong>7.5</strong></td>
+          <td><div class="cvss-bar"><div class="cvss-fill" style="width:75%;background:#fd7e14;"></div></div></td>
+          <td>🟠 Élevé</td><td><span class="status-ok">✅ Oui</span></td>
+        </tr>
+        <tr>
+          <td><code>EXP-04</code></td><td>XSS Stocké — Feedbacks</td>
+          <td><span class="badge badge-owasp">A03:2021</span></td>
+          <td><strong>7.2</strong></td>
+          <td><div class="cvss-bar"><div class="cvss-fill" style="width:72%;background:#fd7e14;"></div></div></td>
+          <td>🟠 Élevé</td><td><span class="status-warn">⚠️ Partiel</span></td>
+        </tr>
+        <tr>
+          <td><code>TEST 03</code></td><td>TRACE actif (XST)</td>
+          <td><span class="badge badge-owasp">A05:2021</span></td>
+          <td><strong>5.8</strong></td>
+          <td><div class="cvss-bar"><div class="cvss-fill" style="width:58%;background:#ffc107;"></div></div></td>
+          <td>🟡 Moyen</td><td>—</td>
+        </tr>
+        <tr>
+          <td><code>TEST 02</code></td><td>En-têtes sécurité manquants</td>
+          <td><span class="badge badge-owasp">A05:2021</span></td>
+          <td><strong>5.3</strong></td>
+          <td><div class="cvss-bar"><div class="cvss-fill" style="width:53%;background:#ffc107;"></div></div></td>
+          <td>🟡 Moyen</td><td>—</td>
+        </tr>
+        <tr>
+          <td><code>TEST 04</code></td><td>Absence de rate limiting</td>
+          <td><span class="badge badge-owasp">A07:2021</span></td>
+          <td><strong>5.3</strong></td>
+          <td><div class="cvss-bar"><div class="cvss-fill" style="width:53%;background:#ffc107;"></div></div></td>
+          <td>🟡 Moyen</td><td>—</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Répartition par catégorie OWASP</h3>
+    <table>
+      <thead><tr><th>Catégorie</th><th>Vulnérabilités identifiées</th></tr></thead>
+      <tbody>
+        <tr><td><strong>A01 — Broken Access Control</strong></td><td>EXP-02 (IDOR), TEST 05 (config admin), EXP-03 (Path Traversal)</td></tr>
+        <tr><td><strong>A03 — Injection</strong></td><td>EXP-01 (SQLi), EXP-04 (XSS stocké)</td></tr>
+        <tr><td><strong>A05 — Security Misconfiguration</strong></td><td>TEST 02 (en-têtes), TEST 03 (méthodes HTTP)</td></tr>
+        <tr><td><strong>A07 — Identification Failures</strong></td><td>TEST 04 (rate limiting absent)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Résumé des builds Jenkins</h3>
+    <table>
+      <thead><tr><th>Test</th><th>Statut script</th><th>Statut build</th><th>Vulnérabilités</th></tr></thead>
+      <tbody>
+        <tr><td>TEST 01 — HTTP</td><td><span class="status-fail">FAILURE</span></td><td><span class="status-fail">FAILURE</span></td><td>2 endpoints non conformes</td></tr>
+        <tr><td>TEST 02 — En-têtes</td><td><span class="status-fail">FAILURE</span></td><td><span class="status-warn">UNSTABLE</span></td><td>HSTS, CSP absents</td></tr>
+        <tr><td>TEST 03 — Méthodes</td><td><span class="status-fail">FAILURE</span></td><td><span class="status-warn">UNSTABLE</span></td><td>TRACE actif</td></tr>
+        <tr><td>TEST 04 — Auth</td><td><span class="status-fail">FAILURE</span></td><td><span class="status-warn">UNSTABLE</span></td><td>SQLi bypass, no rate limiting</td></tr>
+        <tr><td>TEST 05 — APIs</td><td><span class="status-fail">FAILURE</span></td><td><span class="status-warn">UNSTABLE</span></td><td>Feedbacks + config exposés</td></tr>
+        <tr><td>TEST 06 — Exploitation</td><td><span class="status-fail">FAILURE</span></td><td><span class="status-warn">UNSTABLE</span></td><td>3 exploits réussis / 4</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── 7. RECOMMANDATIONS ── -->
+  <section id="s7">
+    <div class="section-header">
+      <div class="section-num">7</div>
+      <h2>Recommandations</h2>
+    </div>
+
+    <h3>Corrections prioritaires (Critique)</h3>
+
+    <div class="rec-card">
+      <div class="rec-header">
+        <span class="rec-id">R01</span>
+        <span class="rec-title">Prévenir les injections SQL</span>
+        <span class="badge badge-crit">Critique</span>
+      </div>
+      <ul style="padding-left:20px; font-size:13px; line-height:1.8;">
+        <li>Utiliser des requêtes préparées ou un ORM avec protection intégrée (Sequelize : <code>where: { email: req.body.email }</code> sans interpolation)</li>
+        <li>Valider et assainir toutes les entrées utilisateur côté serveur</li>
+        <li>Implémenter un WAF (Web Application Firewall) en amont</li>
+      </ul>
+    </div>
+
+    <div class="rec-card">
+      <div class="rec-header">
+        <span class="rec-id">R02</span>
+        <span class="rec-title">Corriger les IDOR</span>
+        <span class="badge badge-crit">Critique</span>
+      </div>
+      <ul style="padding-left:20px; font-size:13px; line-height:1.8;">
+        <li>Vérifier systématiquement la propriété : <code>if (basket.UserId !== req.user.id) return res.status(403).end()</code></li>
+        <li>Remplacer les identifiants séquentiels par des UUIDs v4 non prédictibles</li>
+      </ul>
+    </div>
+
+    <h3>Corrections élevées</h3>
+
+    <div class="rec-card">
+      <div class="rec-header">
+        <span class="rec-id">R03</span>
+        <span class="rec-title">Restreindre l'accès aux fichiers sensibles</span>
+        <span class="badge badge-high">Élevé</span>
+      </div>
+      <ul style="padding-left:20px; font-size:13px; line-height:1.8;">
+        <li>Déplacer les fichiers confidentiels hors de la racine web publique</li>
+        <li>Valider strictement les chemins côté serveur (whitelist d'extensions, neutralisation des null bytes)</li>
+        <li>Supprimer ou protéger par authentification le répertoire <code>/ftp/</code></li>
+      </ul>
+    </div>
+
+    <div class="rec-card">
+      <div class="rec-header">
+        <span class="rec-id">R04</span>
+        <span class="rec-title">Corriger le XSS Stocké</span>
+        <span class="badge badge-high">Élevé</span>
+      </div>
+      <ul style="padding-left:20px; font-size:13px; line-height:1.8;">
+        <li>Encoder toutes les sorties HTML (output encoding)</li>
+        <li>Implémenter une CSP stricte bloquant <code>javascript:</code> dans les attributs <code>src</code></li>
+        <li>Assainir les entrées utilisateur (strip tags, HTML encoding)</li>
+      </ul>
+    </div>
+
+    <h3>Améliorations de configuration</h3>
+
+    <div class="rec-card">
+      <div class="rec-header">
+        <span class="rec-id">R05</span>
+        <span class="rec-title">Ajouter les en-têtes de sécurité manquants</span>
+        <span class="badge badge-med">Moyen</span>
+      </div>
+      <pre><code>Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+Content-Security-Policy: default-src 'self'; script-src 'self'
+Referrer-Policy: strict-origin-when-cross-origin
+Access-Control-Allow-Origin: https://[domaine-specifique]</code></pre>
+    </div>
+
+    <div class="rec-card">
+      <div class="rec-header">
+        <span class="rec-id">R06</span>
+        <span class="rec-title">Désactiver les méthodes HTTP dangereuses</span>
+        <span class="badge badge-med">Moyen</span>
+      </div>
+      <pre><code>// Express.js middleware
+app.use((req, res, next) => {
+  if (['TRACE', 'TRACK'].includes(req.method))
+    return res.status(405).end();
+  next();
+});</code></pre>
+    </div>
+
+    <div class="rec-card">
+      <div class="rec-header">
+        <span class="rec-id">R07</span>
+        <span class="rec-title">Implémenter le rate limiting sur l'authentification</span>
+        <span class="badge badge-med">Moyen</span>
+      </div>
+      <pre><code>const rateLimit = require('express-rate-limit');
+app.use('/rest/user/login', rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15 minutes
+  max: 10,
+  message: 'Too many login attempts, please try again later'
+}));</code></pre>
+    </div>
+
+    <div class="rec-card">
+      <div class="rec-header">
+        <span class="rec-id">R08</span>
+        <span class="rec-title">Protéger les endpoints d'administration</span>
+        <span class="badge badge-high">Élevé</span>
+      </div>
+      <ul style="padding-left:20px; font-size:13px; line-height:1.8;">
+        <li>Restreindre <code>/rest/admin/application-configuration</code> aux seuls administrateurs authentifiés</li>
+        <li>Masquer le champ <code>UserId</code> dans les réponses publiques de <code>/api/Feedbacks</code></li>
+        <li>Implémenter un contrôle d'accès basé sur les rôles (RBAC) cohérent</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── 8. CONCLUSION ── -->
+  <section id="s8">
+    <div class="section-header">
+      <div class="section-num">8</div>
+      <h2>Conclusion</h2>
+    </div>
+
+    <p>Ce laboratoire a permis de concevoir et d'exécuter un <strong>pipeline CI/CD de sécurité complet</strong> orchestré par Jenkins, identifiant et exploitant <strong>8 vulnérabilités</strong> réparties sur 4 catégories du Top 10 OWASP 2021.</p>
+
+    <p>Les vulnérabilités les plus critiques — l'injection SQL (CVSS 9.8) et l'IDOR (CVSS 8.1) — permettent respectivement d'obtenir un accès administrateur complet et de lire les données privées de n'importe quel utilisateur. L'exploitation enchaînée démontre le principe de <strong>pivot</strong> : l'injection SQL (EXP-01) fournit le JWT admin nécessaire pour accéder aux endpoints protégés, révélant à leur tour la configuration interne qui facilite d'autres attaques.</p>
+
+    <p>L'approche CI/CD présente un avantage majeur sur les audits ponctuels : <strong>l'automatisation de la régression de sécurité</strong>. Chaque build garantit qu'une correction introduite ne disparaît pas silencieusement lors d'une refonte. Le statut UNSTABLE signale immédiatement la présence de vulnérabilités sans bloquer les déploiements légitimes.</p>
+
+    <div class="box box-info">
+      Ce laboratoire illustre concrètement l'intégration du concept <strong>DevSecOps</strong> : la sécurité n'est plus un audit ponctuel mais un contrôle continu intégré dans le cycle de développement logiciel.
+    </div>
+  </section>
+
+  <!-- ── 9. ANNEXES ── -->
+  <section id="s9">
+    <div class="section-header">
+      <div class="section-num">9</div>
+      <h2>Annexes — Références aux preuves</h2>
+    </div>
+
+    <h3>Arborescence des preuves</h3>
+    <pre><code>lab1-jenkins/captures/
+├── reports/
+│   ├── evidence/
+│   │   ├── EXP01_request.json                    ← Payload SQLi envoyé
+│   │   ├── EXP01_response.json                   ← JWT admin dans la réponse
+│   │   ├── EXP01_jwt_admin.txt                   ← JWT admin complet
+│   │   ├── EXP01_whoami.json                     ← Identité admin confirmée
+│   │   ├── EXP02_basket_1.json                   ← Panier victime lu
+│   │   ├── EXP03_acquisitions.md.txt             ← Document confidentiel récupéré
+│   │   ├── EXP03_legal.md.txt                    ← Fichier légal récupéré
+│   │   ├── EXP03_nullbyte_package.json.bak.txt   ← Bypass null byte + package.json
+│   │   └── EXP04_xss_request.json                ← Payload XSS envoyé
+│   ├── test_http_output.txt
+│   ├── test_headers_output.txt
+│   ├── test_methods_output.txt
+│   ├── test_auth_output.txt
+│   ├── test_api_security_output.txt
+│   ├── test_exploitation_output.txt
+│   └── rapport_final_lab1.txt                    ← Rapport consolidé Jenkins
+└── *.png                                         ← 10 captures d'écran</code></pre>
+
+    <h3>Captures d'écran</h3>
+    <table>
+      <thead><tr><th>Fichier</th><th>Contenu</th></tr></thead>
+      <tbody>
+        <tr><td><code>01_juiceshop_accueil.png</code></td><td>Page d'accueil OWASP Juice Shop</td></tr>
+        <tr><td><code>02_juiceshop_login.png</code></td><td>Formulaire de connexion</td></tr>
+        <tr><td><code>03_jenkins_dashboard.png</code></td><td>Dashboard Jenkins authentifié</td></tr>
+        <tr><td><code>04_jenkins_manage.png</code></td><td>Page d'administration Jenkins</td></tr>
+        <tr><td><code>05_jenkins_job_page.png</code></td><td>Pipeline <code>juice-shop-security</code></td></tr>
+        <tr><td><code>06_jenkins_build_console.png</code></td><td>Console de build Jenkins (sortie complète)</td></tr>
+        <tr><td><code>07_jenkins_build_detail.png</code></td><td>Détail du build</td></tr>
+        <tr><td><code>08_jenkins_job_apres_build.png</code></td><td>Historique des builds</td></tr>
+        <tr><td><code>09_juiceshop_ftp_directory.png</code></td><td>Répertoire <code>/ftp/</code> exposé</td></tr>
+        <tr><td><code>10_juiceshop_scoreboard.png</code></td><td>Score board Juice Shop</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Références</h3>
+    <ul style="padding-left:20px; line-height:2; font-size:13px;">
+      <li><a href="https://owasp.org/Top10/" style="color:var(--accent2);">OWASP Top 10 2021</a></li>
+      <li><a href="https://owasp.org/www-project-web-security-testing-guide/" style="color:var(--accent2);">OWASP Testing Guide v4.2</a></li>
+      <li><a href="https://www.first.org/cvss/calculator/3.1" style="color:var(--accent2);">CVSS v3.1 Calculator</a></li>
+      <li><a href="https://owasp.org/www-project-juice-shop/" style="color:var(--accent2);">OWASP Juice Shop</a></li>
+      <li><a href="https://www.jenkins.io/doc/book/pipeline/" style="color:var(--accent2);">Jenkins Pipeline Documentation</a></li>
+    </ul>
+  </section>
+
+  <footer>
+    Rapport généré le 10 août 2026 — UNCHK Licence Cybersécurité Groupe 14 —
+    LAB 1 : Pipeline CI/CD de sécurité Jenkins
+  </footer>
+
+</div>
+</body>
+</html>

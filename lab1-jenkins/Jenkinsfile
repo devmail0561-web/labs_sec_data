@@ -1,6 +1,7 @@
 // ============================================================
 // Jenkinsfile — LAB 1 : Pipeline de sécurité automatisé
 // Cible : OWASP Juice Shop (local, isolé)
+// SCM   : https://github.com/devmail0561-web/labs_sec_data
 // ============================================================
 
 pipeline {
@@ -10,6 +11,8 @@ pipeline {
     environment {
         JUICE_SHOP_URL = "http://juiceshop:3000"
         REPORT_DIR     = "/tmp/reports_${BUILD_NUMBER}"
+        NOTIFY_EMAIL   = "michel.tendeng@unchk.edu.sn"
+        REPO_URL       = "https://github.com/devmail0561-web/labs_sec_data"
     }
 
     options {
@@ -17,6 +20,18 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '10'))
         timestamps()
         disableConcurrentBuilds()
+    }
+
+    // ── Déclencheurs ──────────────────────────────────────────
+    // pollSCM  : Jenkins interroge le dépôt toutes les 5 min
+    // githubPush : déclenchement immédiat via webhook GitHub
+    //   → Configurer dans GitHub : Settings > Webhooks
+    //   → Payload URL : http://<IP_JENKINS>:8080/github-webhook/
+    //   → Content type : application/json
+    //   → Event       : Just the push event
+    triggers {
+        pollSCM('H/5 * * * *')
+        githubPush()
     }
 
     stages {
@@ -146,6 +161,44 @@ pipeline {
             echo "============================================================"
             echo " FIN — Build #${env.BUILD_NUMBER} — Statut : ${currentBuild.currentResult}"
             echo "============================================================"
+
+            // ── Notification email — résultats du pipeline ──────────────
+            emailext(
+                to:      "${env.NOTIFY_EMAIL}",
+                subject: "[Jenkins LAB1] Build #${env.BUILD_NUMBER} — ${currentBuild.currentResult} — Juice Shop Security",
+                mimeType: 'text/html',
+                body: """
+<html><body style="font-family:sans-serif;font-size:14px;">
+<h2 style="color:#1a3a5c;">LAB 1 — Pipeline de sécurité OWASP Juice Shop</h2>
+<table style="border-collapse:collapse;width:100%;max-width:600px;">
+  <tr><td style="padding:6px 12px;background:#f1f5f9;font-weight:bold;">Build</td>
+      <td style="padding:6px 12px;">#${env.BUILD_NUMBER}</td></tr>
+  <tr><td style="padding:6px 12px;background:#f1f5f9;font-weight:bold;">Statut</td>
+      <td style="padding:6px 12px;font-weight:bold;color:${currentBuild.currentResult == 'SUCCESS' ? '#198754' : currentBuild.currentResult == 'UNSTABLE' ? '#fd7e14' : '#dc3545'};">
+          ${currentBuild.currentResult}</td></tr>
+  <tr><td style="padding:6px 12px;background:#f1f5f9;font-weight:bold;">Durée</td>
+      <td style="padding:6px 12px;">${currentBuild.durationString}</td></tr>
+  <tr><td style="padding:6px 12px;background:#f1f5f9;font-weight:bold;">Dépôt</td>
+      <td style="padding:6px 12px;"><a href="${env.REPO_URL}">${env.REPO_URL}</a></td></tr>
+  <tr><td style="padding:6px 12px;background:#f1f5f9;font-weight:bold;">Commit</td>
+      <td style="padding:6px 12px;">${env.GIT_COMMIT ?: 'n/a'}</td></tr>
+  <tr><td style="padding:6px 12px;background:#f1f5f9;font-weight:bold;">Branche</td>
+      <td style="padding:6px 12px;">${env.GIT_BRANCH ?: 'n/a'}</td></tr>
+  <tr><td style="padding:6px 12px;background:#f1f5f9;font-weight:bold;">Console</td>
+      <td style="padding:6px 12px;"><a href="${env.BUILD_URL}console">Voir les logs</a></td></tr>
+  <tr><td style="padding:6px 12px;background:#f1f5f9;font-weight:bold;">Artefacts</td>
+      <td style="padding:6px 12px;"><a href="${env.BUILD_URL}artifact/">Télécharger les rapports</a></td></tr>
+</table>
+<br>
+<p style="color:#6c757d;font-size:12px;">
+  UNSTABLE = vulnérabilités détectées (comportement attendu sur Juice Shop).<br>
+  FAILURE = erreur critique du pipeline (cible inaccessible ou script cassé).
+</p>
+</body></html>
+                """,
+                attachLog: false,
+                compressLog: false
+            )
         }
         success  { echo "[SUCCESS]  Tous les tests passés." }
         unstable { echo "[UNSTABLE] Vulnérabilités détectées et documentées." }
