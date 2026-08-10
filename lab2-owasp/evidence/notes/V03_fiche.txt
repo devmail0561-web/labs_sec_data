@@ -1,0 +1,1 @@
+ID: V03 | OWASP: A01:2021 | CVSS: 7.5 | Config admin exposée sans token

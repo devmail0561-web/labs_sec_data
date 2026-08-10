@@ -1,0 +1,1 @@
+ID: V01 | OWASP: A05:2021 | CVSS: 5.3 | En-têtes CSP/HSTS/X-Content-Type manquants

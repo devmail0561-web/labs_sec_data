@@ -1,0 +1,1 @@
+ID: V04 | OWASP: A03:2021 | CVSS: 9.8 | SQLi bypass login confirmé

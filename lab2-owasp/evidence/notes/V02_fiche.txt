@@ -1,0 +1,2 @@
+ID: V02 | OWASP: A02:2021 | CVSS: 7.5 | /api/Users expose 0
+0 emails sans auth
