@@ -43,7 +43,6 @@ pipeline {
                 echo "============================================================"
                 sh '''
                     mkdir -p "${REPORT_DIR}/evidence"
-                    chmod +x /lab/scripts/*.sh
                     echo "[OK] Scripts prêts"
                     ls -la /lab/scripts/
                 '''
