@@ -1,0 +1,155 @@
+// ============================================================
+// Jenkinsfile — LAB 1 : Pipeline de sécurité automatisé
+// Cible : OWASP Juice Shop (local, isolé)
+// ============================================================
+
+pipeline {
+
+    agent any
+
+    environment {
+        JUICE_SHOP_URL = "http://juiceshop:3000"
+        REPORT_DIR     = "/tmp/reports_${BUILD_NUMBER}"
+    }
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+    stages {
+
+        stage('Préparation') {
+            steps {
+                echo "============================================================"
+                echo " LAB 1 — Pipeline de sécurité OWASP Juice Shop"
+                echo " Build #${env.BUILD_NUMBER} — ${new Date()}"
+                echo "============================================================"
+                sh '''
+                    mkdir -p "${REPORT_DIR}/evidence"
+                    chmod +x /lab/scripts/*.sh
+                    echo "[OK] Scripts prêts"
+                    ls -la /lab/scripts/
+                '''
+            }
+        }
+
+        stage('Vérification cible') {
+            steps {
+                script {
+                    def maxAttempts = 12
+                    def attempt    = 0
+                    def ready      = false
+                    while (attempt < maxAttempts && !ready) {
+                        def code = sh(
+                            script: "curl -s -o /dev/null -w '%{http_code}' --connect-timeout 5 '${env.JUICE_SHOP_URL}' 2>/dev/null || echo '000'",
+                            returnStdout: true
+                        ).trim()
+                        if (code == '200') {
+                            echo "[OK] Juice Shop disponible (HTTP ${code})"
+                            ready = true
+                        } else {
+                            echo "[WAIT] HTTP ${code} — Tentative ${attempt + 1}/${maxAttempts}"
+                            sleep(5)
+                            attempt++
+                        }
+                    }
+                    if (!ready) error("[ERREUR] Juice Shop inaccessible.")
+                }
+            }
+        }
+
+        stage('TEST 01 — Disponibilité HTTP') {
+            steps {
+                sh '/lab/scripts/test_http.sh'
+            }
+            post {
+                failure { echo "[FAIL] TEST 01 — Endpoints HTTP non conformes" }
+                success { echo "[OK]   TEST 01 — Tous les endpoints répondent" }
+            }
+        }
+
+        stage('TEST 02 — En-têtes de sécurité') {
+            steps {
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    sh '/lab/scripts/test_headers.sh'
+                }
+            }
+        }
+
+        stage('TEST 03 — Méthodes HTTP') {
+            steps {
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    sh '/lab/scripts/test_methods.sh'
+                }
+            }
+        }
+
+        stage('TEST 04 — Authentification') {
+            steps {
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    sh '/lab/scripts/test_auth.sh'
+                }
+            }
+        }
+
+        stage('TEST 05 — Exposition APIs') {
+            steps {
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    sh '/lab/scripts/test_api_security.sh'
+                }
+            }
+        }
+
+        stage('TEST 06 — Exploitation') {
+            steps {
+                echo "--- Phase d'exploitation : SQLi→JWT / IDOR / FTP / XSS ---"
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    sh '/lab/scripts/test_exploitation.sh'
+                }
+            }
+            post {
+                always {
+                    echo "[INFO] Preuves d'exploitation dans : ${REPORT_DIR}/evidence/"
+                }
+            }
+        }
+
+        stage('Rapport consolidé') {
+            steps {
+                sh '/lab/scripts/generate_report.sh'
+            }
+        }
+
+        stage('Archivage') {
+            steps {
+                sh '''
+                    mkdir -p "${WORKSPACE}/reports"
+                    cp "${REPORT_DIR}"/*.txt "${WORKSPACE}/reports/" 2>/dev/null || true
+                    cp -r "${REPORT_DIR}/evidence" "${WORKSPACE}/reports/" 2>/dev/null || true
+                    echo "[OK] Artefacts copiés"
+                    ls -la "${WORKSPACE}/reports/"
+                '''
+                archiveArtifacts(
+                    artifacts: 'reports/**/*',
+                    allowEmptyArchive: true,
+                    fingerprint: true
+                )
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "============================================================"
+            echo " FIN — Build #${env.BUILD_NUMBER} — Statut : ${currentBuild.currentResult}"
+            echo "============================================================"
+        }
+        success  { echo "[SUCCESS]  Tous les tests passés." }
+        unstable { echo "[UNSTABLE] Vulnérabilités détectées et documentées." }
+        failure  { echo "[FAILURE]  Erreur critique — vérifier la cible." }
+        cleanup  { sh 'rm -rf "${REPORT_DIR}" 2>/dev/null || true' }
+    }
+}
