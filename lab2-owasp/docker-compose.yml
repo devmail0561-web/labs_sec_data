@@ -20,13 +20,22 @@ services:
     image: bkimminich/juice-shop:latest
     container_name: juiceshop-lab2
     restart: unless-stopped
+
     networks:
       lab2-net:
         ipv4_address: 172.21.0.10
+
     ports:
       - "3001:3000"
+
     healthcheck:
-      test: ["CMD-SHELL", "curl -fs http://localhost:3000 > /dev/null || exit 1"]
+      test:
+        [
+          "CMD",
+          "/nodejs/bin/node",
+          "-e",
+          "require('http').get('http://localhost:3000', r => process.exit(r.statusCode >= 200 && r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"
+        ]
       interval: 15s
       timeout: 10s
       retries: 8
@@ -36,17 +45,23 @@ services:
     image: ghcr.io/zaproxy/zaproxy:stable
     container_name: owasp-zap
     restart: unless-stopped
+
     networks:
       lab2-net:
         ipv4_address: 172.21.0.30
+
     ports:
       - "8090:8080"
       - "8091:8090"
+
     command: zap-webswing.sh
+
     environment:
       - ZAP_PORT=8080
+
     volumes:
       - ./scans:/zap/wrk:rw
+
     depends_on:
       juiceshop:
         condition: service_healthy
