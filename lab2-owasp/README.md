@@ -95,8 +95,7 @@ lab2-owasp/
 │   └── notes/                      ← Fiches de vulnérabilités
 ├── reports/                        ← Rapports finaux
 │   ├── rapport_lab2_owasp.html     ← Rapport complet (HTML, page de garde colorée)
-│   ├── rapport_lab2_owasp.md       ← Rapport complet (Markdown)
-│   └── captures_lab2.pdf           ← Captures d'écran des exploits (PDF)
+│   └── rapport_lab2_owasp.md       ← Rapport complet (Markdown)
 └── scans/
     ├── zap_scan.sh                 ← Scan automatisé ZAP
     ├── test_vulnerabilities_manuels.sh  ← Détection V01–V04
@@ -125,21 +124,6 @@ lab2-owasp/
 | EXP-03 | Path Traversal /ftp/ + null byte | A01:2021 | 7.5 | http/EXP03_*.txt |
 | EXP-04 | XSS stocké feedbacks | A03:2021 | 7.2 | responses/EXP04_feedbacks.json |
 | EXP-05 | Mass Assignment → admin | A08:2021 | 8.8 | responses/EXP05_escalation.json |
-
----
-
-## Captures d'écran manuelles à réaliser
-
-Sauvegarder dans `evidence/screenshots/` :
-
-| Fichier | Quand |
-|---|---|
-| `EXP01_admin_panel.png` | Panel admin accessible après EXP-01 |
-| `EXP01_whoami_admin.png` | /whoami retourne l'identité admin |
-| `EXP02_basket_stolen.png` | Panier victime affiché |
-| `EXP04_xss_alert.png` | Alerte XSS sur /#/about |
-| `EXP05_role_admin.png` | Rôle admin dans la réponse API |
-| `zap_report_overview.png` | Tableau de bord ZAP |
 
 ---
 
