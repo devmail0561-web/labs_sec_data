@@ -1,0 +1,21 @@
+============================================================
+ TEST 05 — Exposition APIs
+ Date  : 2026-08-10 19:06:40
+ Cible : http://localhost:3000
+============================================================
+
+[TEST] Liste utilisateurs — /api/Users — HTTP 401
+  [OK] Endpoint protégé
+
+[TEST] Feedbacks — /api/Feedbacks — HTTP 200
+  [CRITICAL] Données sensibles exposées sans authentification
+
+[TEST] Config admin — /rest/admin/application-configuration — HTTP 200
+  [CRITICAL] Données sensibles exposées sans authentification
+
+[TEST] Répertoire FTP — /ftp/ — HTTP 200000
+  [INFO] Extrait : <!DOCTYPE html><html>  <head>    <meta charset='utf-8'>     <meta name="viewport" content="width=device-width, initi...
+
+ RÉSULTAT : FAILURE
+ RÉFÉRENCE : A01:2021 / A02:2021
+============================================================

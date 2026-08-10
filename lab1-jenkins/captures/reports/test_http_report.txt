@@ -1,0 +1,13 @@
+============================================================
+ TEST 01 — Disponibilité HTTP
+ Date  : 2026-08-10 19:06:33
+ Cible : http://localhost:3000
+============================================================
+[PASS] Page d'accueil — HTTP 200
+[PASS] API Challenges — HTTP 200
+[FAIL] API Users — HTTP 401 (attendu 200)
+[PASS] Endpoint whoami — HTTP 200
+[FAIL] Page inexistante (404 attendu) — HTTP 200 (attendu 404)
+
+ RÉSULTAT : FAILURE
+============================================================

@@ -1,0 +1,21 @@
+============================================================
+ TEST 03 — Méthodes HTTP
+ Date  : 2026-08-10 19:06:33
+ Cible : http://localhost:3000
+============================================================
+
+--- Méthodes standard ---
+[INFO] GET — HTTP 200
+[INFO] POST — HTTP 200
+[INFO] HEAD — HTTP 200000
+[INFO] OPTIONS — HTTP 204
+
+--- Méthodes dangereuses ---
+[WARN] TRACE — HTTP 200 — méthode potentiellement dangereuse
+[WARN] PUT — HTTP 200 — méthode potentiellement dangereuse
+[WARN] DELETE — HTTP 200 — méthode potentiellement dangereuse
+[WARN] CONNECT — HTTP 000000 — méthode potentiellement dangereuse
+
+ RÉSULTAT : FAILURE — TRACE actif
+ RÉFÉRENCE : A05:2021 / OTG-CONFIG-006
+============================================================

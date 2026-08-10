@@ -1,0 +1,20 @@
+============================================================
+ TEST 04 — Authentification
+ Date  : 2026-08-10 19:06:40
+ Cible : http://localhost:3000
+============================================================
+
+[TEST] SQL Injection sur /rest/user/login
+  Payload : ' OR '1'='1'--
+  HTTP    : 200
+  [CRITICAL] SQLi réussie — JWT retourné sans credentials valides
+
+[TEST] Verbosité des messages d'erreur
+  Réponse : Invalid email or password.
+
+[TEST] Rate limiting (5 tentatives rapides)
+  [WARN] Pas de rate limiting détecté après 5 tentatives
+
+ RÉSULTAT : FAILURE
+ RÉFÉRENCE : A03:2021 / A07:2021
+============================================================

