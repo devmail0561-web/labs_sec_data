@@ -11,7 +11,7 @@ pipeline {
     environment {
         JUICE_SHOP_URL = "http://juiceshop:3000"
         REPORT_DIR     = "/tmp/reports_${BUILD_NUMBER}"
-        NOTIFY_EMAIL   = "michel.tendeng@unchk.edu.sn"
+        NOTIFY_EMAIL   = '$DEFAULT_RECIPIENTS'
         REPO_URL       = "https://github.com/devmail0561-web/labs_sec_data"
     }
 

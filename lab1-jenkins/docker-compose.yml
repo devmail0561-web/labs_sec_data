@@ -15,6 +15,10 @@ networks:
       config:
         - subnet: 172.20.0.0/24
 
+  # Réseau dédié mail (MailHog accessible depuis lab1-net via alias)
+  mail-net:
+    driver: bridge
+
 volumes:
   jenkins_home:
 
@@ -61,6 +65,7 @@ services:
     networks:
       lab1-net:
         ipv4_address: 172.20.0.20
+      mail-net: {}
 
     ports:
       - "8080:8080"
@@ -77,5 +82,24 @@ services:
     depends_on:
       juiceshop:
         condition: service_healthy
+
+  # ==========================================================
+  # MailHog — SMTP relay de test (pas de vrai envoi)
+  # SMTP  : port 1025  → configurer Jenkins sur mailhog:1025
+  # Web UI: http://localhost:8025
+  # ==========================================================
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mailhog
+    restart: unless-stopped
+
+    networks:
+      lab1-net:
+        ipv4_address: 172.20.0.30
+      mail-net: {}
+
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
 
 
