@@ -55,29 +55,48 @@ docker compose up -d
 
 # 3. Vérifier
 docker compose ps
-
-# 4. Récupérer le mot de passe Jenkins initial (attendre ~60s)
-docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ```
 
 **Juice Shop** → http://localhost:3000  
-**Jenkins**    → http://localhost:8080  
+**Jenkins**    → http://localhost:8080  (`admin` / `admin123`)  
 **MailHog**    → http://localhost:8025
 
 ---
 
 ## Configuration Jenkins
 
-1. Ouvrir http://localhost:8080
-2. Saisir le mot de passe initial
-3. Installer les plugins suggérés
-4. Créer un compte administrateur
-5. **New Item** → nom : `juice-shop-security` → type : **Pipeline**
-6. Section **Pipeline** → **Pipeline script from SCM**
+1. Ouvrir http://localhost:8080 → `admin` / `admin123`
+2. **New Item** → nom : `juice-shop-security` → type : **Pipeline**
+3. Section **Pipeline** → **Pipeline script from SCM**
    - SCM : **Git**
-   - Repository URL : chemin local ou URL Git du projet
-   - Script Path : `lab1-jenkins/Jenkinsfile`
-7. **Save** → **Build Now**
+   - Repository URL : `https://github.com/devmail0561-web/juice-shop.git`
+   - Branch : `*/master`
+   - Script Path : `Jenkinsfile`
+4. **Save** → **Build Now**
+
+### Déclencheurs
+
+Le pipeline se déclenche de deux façons :
+
+| Mode | Mécanisme | Délai |
+|---|---|---|
+| Webhook GitHub (push) | `githubPush()` | Immédiat |
+| Polling SCM | `H/5 * * * *` | ≤ 5 min |
+
+**Le webhook nécessite que Jenkins soit accessible depuis Internet.**
+Jenkins tourne en local → utiliser **ngrok** pour exposer le port 8080 :
+
+```bash
+ngrok http 8080
+# Copier l'URL générée, ex. : https://abc123.ngrok.io
+```
+
+Puis dans `github.com/devmail0561-web/juice-shop` → **Settings → Webhooks** :
+- Payload URL : `https://abc123.ngrok.io/github-webhook/`
+- Content type : `application/json`
+- Event : **Just the push event**
+
+Sans ngrok, le polling seul suffit pour le lab (déclenchement automatique toutes les 5 min).
 
 ### Configuration email (plugin Email Extension)
 
@@ -98,10 +117,13 @@ sur http://localhost:8025 (aucun envoi externe).
 
 ## Arborescence
 
+Le Jenkinsfile actif est dans le fork juice-shop :
+`github.com/devmail0561-web/juice-shop` → `Jenkinsfile` (racine, branche `master`)
+
 ```
 lab1-jenkins/
 ├── docker-compose.yml          ← Juice Shop + Jenkins + MailHog
-├── Jenkinsfile                 ← Pipeline 8 étapes + notification $DEFAULT_RECIPIENTS
+├── Jenkinsfile                 ← Référence locale (copie du Jenkinsfile actif)
 ├── README.md
 ├── reports/
 │   ├── rapport_lab1_jenkins.html  ← Rapport complet (HTML)
