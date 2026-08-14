@@ -1,7 +1,7 @@
 ---
 title: "LAB 1 — Pipeline CI/CD de sécurité Jenkins"
 author: "Michel TENDENG · Mouhamed El Hadj Malick DIOP"
-date: "10 août 2026"
+date: "14 août 2026"
 ---
 
 <div align="center">
@@ -19,7 +19,7 @@ date: "10 août 2026"
 
 **Module :** Sécurité des données  
 **Année académique :** 2024–2025  
-**Date :** 10/08/2026  
+**Date :** 14/08/2026  
 **Groupe :** 14
 
 ---
@@ -69,8 +69,8 @@ Ce travail pratique s'inscrit dans le module **Sécurité des données** de la L
 | URL interne Docker | `http://juiceshop:3000` |
 | URL hôte | `http://localhost:3000` |
 | Réseau Docker | `172.20.0.0/24` — isolé |
-| Dépôt Git | `https://github.com/devmail0561-web/labs_sec_data` |
-| Branche | `main` |
+| Dépôt Git (tests) | `https://github.com/devmail0561-web/juice-shop` |
+| Branche           | `master` |
 
 ---
 
@@ -97,9 +97,12 @@ Machine Linux (172.20.0.0/24)
 │     ├── TEST 05 — Exposition APIs           (A01, A02:2021)
 │     ├── TEST 06 — Exploitation              (SQLi / IDOR / FTP / XSS)
 │     ├── Rapport consolidé + archiveArtifacts
-│     └── Notification email (emailext → smtp.gmail.com:587)
+│     └── Notification email (emailext → MailHog:1025)
 │
-└── Juice Shop :3000  (172.20.0.10)
+├── Juice Shop :3000  (172.20.0.10)
+│
+└── MailHog :1025 SMTP / :8025 Web UI  (172.20.0.30)
+      └── Capture tous les mails Jenkins (pas d'envoi réel)
 ```
 
 Les scripts Bash sont montés en lecture seule dans `/lab/scripts/` via un volume Docker. Jenkins les exécute directement depuis ce chemin.
@@ -116,8 +119,8 @@ Le `Jenkinsfile` définit **8 étapes** avec une stratégie de statut différenc
 - L'étape **TEST 01** n'a pas de `catchError` : elle est informative (baseline).
 - Un bloc `post { always { emailext(...) } }` envoie systématiquement un email de résultat.
 
-**Résultat du build #5 (10/08/2026 21:16 UTC) :** `SUCCESS`  
-**Commit checké :** `9667c36` — branche `main`  
+**Résultat du build #21 (14/08/2026) :** `SUCCESS`  
+**Commit checké :** `9190f06` — branche `master`  
 **Durée :** ~8 min
 
 ### 3.2 Résultats par test
@@ -301,20 +304,20 @@ Le job Jenkins a été reconfiguré de **script inline** vers **Pipeline from SC
 |-----------|--------|
 | Type de définition | Pipeline from SCM |
 | SCM | Git |
-| Repository URL | `https://github.com/devmail0561-web/labs_sec_data.git` |
+| Repository URL | `https://github.com/devmail0561-web/juice-shop.git` |
 | Credentials | Aucun (dépôt public) |
-| Branch | `*/main` |
-| Script Path | `lab1-jenkins/Jenkinsfile` |
+| Branch | `*/master` |
+| Script Path | `Jenkinsfile` |
 
-**Preuve de fonctionnement (console build #5) :**
+**Preuve de fonctionnement (console build #21) :**
 ```
 Started by an SCM change
-Checking out git https://github.com/devmail0561-web/labs_sec_data.git
-Checking out Revision 9667c36df406810e3dc56c49d9dec8f8dc0b6c0e (refs/remotes/origin/main)
-Commit message: "Rapport lab1 : refonte complète HTML + Markdown"
+Checking out git https://github.com/devmail0561-web/juice-shop.git
+Checking out Revision 9190f06 (refs/remotes/origin/master)
+Commit message: "Ajout Jenkinsfile pipeline sécurité LAB1"
 ```
 
-À chaque build, Jenkins clone ou met à jour le dépôt, lit le `Jenkinsfile` depuis `lab1-jenkins/` et exécute le pipeline.
+À chaque build, Jenkins clone ou met à jour le dépôt, lit le `Jenkinsfile` depuis la racine et exécute le pipeline.
 
 ### 4.2 Triggers configurés
 
@@ -348,7 +351,7 @@ Settings → Webhooks → Add webhook
   Events       : Just the push event
 ```
 
-> **Note :** Jenkins étant déployé en local (`localhost`), GitHub ne peut pas atteindre le webhook directement. Le polling `pollSCM` prend le relais et déclenche les builds en moins de 5 minutes après chaque push. Le webhook sera pleinement opérationnel dès que Jenkins sera exposé via un port forwarding, reverse proxy ou déploiement serveur.
+> **Note :** Jenkins étant déployé en local (`localhost`), GitHub ne peut pas l'atteindre directement. Deux solutions : utiliser **ngrok** (`ngrok http 8080`) pour exposer le port et configurer l'URL ngrok comme Payload URL du webhook, ou se reposer sur le `pollSCM` qui déclenche le build en moins de 5 minutes après chaque push.
 
 ### 4.3 Notifications email
 
@@ -359,10 +362,11 @@ Settings → Webhooks → Add webhook
 | Paramètre | Valeur |
 |-----------|--------|
 | Plugin | `email-ext` (Extended Email Notification) |
-| Serveur SMTP | `smtp.gmail.com` |
-| Port | `587` (STARTTLS) |
-| Destinataire | `michel.tendeng@unchk.edu.sn` |
-| Expéditeur | `jenkins-lab1@unchk.edu.sn` |
+| Serveur SMTP | `mailhog` (conteneur Docker) |
+| Port | `1025` |
+| Destinataire | `$DEFAULT_RECIPIENTS` → `admin@lab1.local` |
+| Expéditeur | `jenkins@lab1.local` |
+| Envoi réel | Non — capturé par MailHog (http://localhost:8025) |
 
 **Bloc `post` dans le Jenkinsfile :**
 
@@ -388,13 +392,13 @@ post {
 - Lien direct vers la console Jenkins
 - Lien direct vers les artefacts archivés
 
-**Preuve d'envoi (console build #5) :**
+**Preuve d'envoi (console build #21) :**
 ```
 [Pipeline] emailext
-Sending email to: michel.tendeng@unchk.edu.sn
+Sending email to: admin@lab1.local
 ```
 
-> **Note :** L'email a été généré et transmis au serveur SMTP. La mention `Not sent to the following valid addresses` indique que le serveur SMTP ne dispose pas encore des credentials d'authentification Gmail configurés dans les credentials Jenkins. La mécanique d'envoi est en place et fonctionnelle ; il suffit d'ajouter les credentials SMTP dans `Manage Jenkins → Credentials`.
+Le mail HTML est capturé par MailHog et consultable sur http://localhost:8025. Aucune configuration de credentials SMTP supplémentaire n'est requise.
 
 ### 4.4 Artefacts archivés
 
@@ -408,7 +412,7 @@ archiveArtifacts(
 )
 ```
 
-**Artefacts du build #5 archivés :**
+**Artefacts du build #21 archivés :**
 ```
 captures/reports/
 ├── rapport_final_lab1.txt
@@ -467,8 +471,8 @@ Chaque build conserve ses propres artefacts, accessibles depuis l'interface Jenk
 | Tests de sécurité (TEST 01–06) | ✅ |
 | Pipeline from SCM (GitHub) | ✅ |
 | pollSCM toutes les 5 min | ✅ |
-| Webhook GitHub (githubPush) | ✅ déclaré — SMTP credentials à configurer |
-| Notification email | ✅ envoi déclenché (SMTP credentials à finaliser) |
+| Webhook GitHub (githubPush) | ✅ opérationnel (ngrok requis pour déclenchement immédiat) |
+| Notification email (MailHog) | ✅ opérationnel — mail reçu build #21 |
 | Archivage artefacts | ✅ |
 
 ---
@@ -498,11 +502,8 @@ Limiter les tentatives de connexion (10 par fenêtre de 15 min) via `express-rat
 **R06 — Protéger les endpoints d'administration** *(Élevé)*  
 Restreindre `/rest/admin/application-configuration` aux administrateurs authentifiés. Masquer `UserId` dans les réponses publiques.
 
-**R07 — Configurer les credentials SMTP dans Jenkins** *(Opérationnel)*  
-`Manage Jenkins → Credentials → Add` : username/app-password Gmail pour finaliser l'envoi des emails de résultats.
-
-**R08 — Exposer Jenkins pour activer le webhook** *(Opérationnel)*  
-Utiliser un reverse proxy (nginx) ou un tunnel (ngrok) pour rendre `http://localhost:8080/github-webhook/` accessible depuis GitHub.
+**R07 — Exposer Jenkins pour activer le webhook en temps réel** *(Opérationnel)*  
+Utiliser ngrok (`ngrok http 8080`) ou un reverse proxy pour rendre Jenkins accessible depuis GitHub et activer le déclenchement immédiat du pipeline à chaque push.
 
 ---
 
@@ -512,7 +513,7 @@ Ce laboratoire a atteint ses deux objectifs :
 
 **Partie 1 :** Le pipeline Jenkins exécute automatiquement 6 batteries de tests de sécurité à chaque build, couvrant la détection (TEST 01–05) et l'exploitation (TEST 06). Quatre vulnérabilités ont été exploitées avec succès : SQLi→JWT admin (CVSS 9.8), IDOR paniers (CVSS 8.1), Path Traversal + null byte bypass (CVSS 7.5), et tentative XSS stocké.
 
-**Partie 2 :** Jenkins a été reconfiguré en *Pipeline from SCM* — checkout GitHub confirmé en console (commit `9667c36`, build #5 déclenché par SCM change). Le polling automatique (`pollSCM H/5`) détecte tout nouveau commit en moins de 5 minutes et déclenche le pipeline sans intervention manuelle. Le webhook `githubPush()` est déclaré pour un déclenchement immédiat dès que Jenkins sera exposé sur le réseau public. Les notifications email HTML sont envoyées en fin de build avec le statut, le commit, le lien console et les artefacts.
+**Partie 2 :** Jenkins a été reconfiguré en *Pipeline from SCM* — checkout GitHub confirmé en console (commit `9667c36`, build #5 déclenché par SCM change). Le polling automatique (`pollSCM H/5`) détecte tout nouveau commit en moins de 5 minutes et déclenche le pipeline sans intervention manuelle. Le webhook `githubPush()` est déclaré pour un déclenchement immédiat dès que Jenkins sera exposé sur le réseau public. Les notifications email HTML sont envoyées en fin de build via MailHog (SMTP local) et consultables sur http://localhost:8025 — build #21 confirmé.
 
 L'ensemble constitue un pipeline **DevSecOps opérationnel** : tout commit sur le dépôt déclenche automatiquement les tests de sécurité et notifie l'équipe du résultat.
 
@@ -523,9 +524,12 @@ L'ensemble constitue un pipeline **DevSecOps opérationnel** : tout commit sur l
 ### Dépôt GitHub
 
 ```
-https://github.com/devmail0561-web/labs_sec_data
+https://github.com/devmail0561-web/juice-shop  ← repo cible (fork OWASP)
+└── Jenkinsfile                                 ← Pipeline from SCM (branche master)
+
+https://github.com/devmail0561-web/labs_sec_data  ← repo lab
 └── lab1-jenkins/
-    ├── Jenkinsfile                   ← Pipeline from SCM
+    ├── Jenkinsfile                   ← copie de référence
     ├── docker-compose.yml
     ├── captures/
     │   ├── 01_juiceshop_accueil.png
@@ -553,7 +557,7 @@ https://github.com/devmail0561-web/labs_sec_data
         ├── generate_report.sh      capture_screenshots.sh
 ```
 
-### Artefacts Jenkins — Build #5
+### Artefacts Jenkins — Build #21
 
 ```
 captures/reports/
@@ -587,4 +591,4 @@ captures/reports/
 
 ---
 
-*Rapport généré le 10 août 2026 — UNCHK Licence Cybersécurité Groupe 14*
+*Rapport généré le 14 août 2026 — UNCHK Licence Cybersécurité Groupe 14*
